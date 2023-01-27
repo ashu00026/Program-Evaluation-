@@ -1,4 +1,5 @@
 const mongoose=require('mongoose')
+// const autoIncrement = require('mongoose-auto-increment');
 
 const studentSchema= new mongoose.Schema({
     studentId:{
@@ -98,6 +99,42 @@ const subjectsSchema=new mongoose.Schema({
 },
 })
 
+const questionsSchema=new mongoose.Schema({
+    problemName:{
+        type:String,
+        required:[true,"please provide a short name for the problem"]
+    },
+    problemStatement:{
+        type:String,
+        required:[true,"please provide a question"]
+    },
+    testCases:[{
+        input:{
+
+        },
+        output:{
+
+        }
+    }],
+    testCasesCount:{
+        type:Number,
+        default:0
+    },
+    subject:{
+        type:String,
+        required:[true,"mention the subject"]
+    },
+    semester:{
+        type:Number,
+        required:[true,"mention the Semester details"]
+    },
+    department:{
+        type:String,
+        required:[true,"give the department Details"]
+    }
+})
+
+const questionsDatabase=mongoose.model('questionsDatabase',questionsSchema)
 const studentDatabase =mongoose.model('studentdb', studentSchema)
 const staffDatabase=mongoose.model('staffdb',staffSchema)
 const resultsDatabase=mongoose.model('resultsdb',resultsSchema)
@@ -107,5 +144,6 @@ module.exports={
     studentDatabase,
     staffDatabase,
     resultsDatabase,
-    subjectsDatabase
+    subjectsDatabase,
+    questionsDatabase
 }

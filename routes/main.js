@@ -1,7 +1,8 @@
 const express = require('express')
 const router = express.Router()
 const { login, 
-    register,addSubject,getStudent,getFaculty,getAllResults,getResult
+    register,addSubject,getStudent,getFaculty,getAllResults,getResult,
+    addProblem,getQuestions,getQuestion
     // deleteSubject 
 } = require('../controllers/main')
 
@@ -12,6 +13,9 @@ router.route('/login/getStudent').get(getStudent)
 router.route('/login/getStaff').get(getFaculty)
 router.route('/login/getAllResults').get(getAllResults)
 router.route('/login/getResult').get(getResult)
+router.route('/faculty/addQuestions').post(addProblem)
+router.route('/student/getQuestions').post(getQuestions)
+router.route('/student/getQuestion').get(getQuestion)
 // router.route('/assistant/register/f/deleteSubjects').post(deleteSubject)
     
     

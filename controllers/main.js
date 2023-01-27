@@ -2,7 +2,7 @@ require('dotenv').config();
 const {studentDatabase,
   staffDatabase,
   resultsDatabase,
-  subjectsDatabase}=require('../model/schema')
+  subjectsDatabase,questionsDatabase}=require('../model/schema')
 
 const jwt = require('jsonwebtoken')
 const { BadRequestError } = require('../errors');
@@ -269,8 +269,58 @@ const getResult=async(req,res)=>{
   res.status(200).json({studentId:ID,name:theStudentName,subject:theSubject,Result:theResult})
 }
 
-// const facultyDashBoard=async(req,res)=>{
+const addProblem=async(req,res)=>{
+  console.log("inside add prblem")
+  const {problemStatement,testCases,subject,semester,department,problemName}=req.body
+  const theproblemName=problemName.toUpperCase();
+  const theSubject=subject.toUpperCase();
+  const theDepartment=department.toUpperCase();
+  var testCaseCount=testCases.length
+  await questionsDatabase.create({problemStatement:problemStatement,problemName:theproblemName,
+    testCases:testCases,subject:theSubject,testCasesCount:testCaseCount,semester:semester,department:theDepartment
+  })
+  res.status(200).json({msg:"problem added to subject!"})
+}
 
+const getQuestions=async(req,res)=>{
+  console.log("inside getQuestions")
+  const {subject,semester,department}=req.body
+  console.log(subject,semester,department)
+  const theDepartment=department.toUpperCase();
+  const theSubject=subject.toUpperCase();
+  const questions=await questionsDatabase.find({subject:theSubject,semester:semester,department:theDepartment})
+  console.log(questions)
+  if(questions.length==0){
+    res.json({msg:"no questions found for the subject"})
+  }else{
+    const questionsArray=[]
+    questions.forEach(record=>{
+      const theQuestion=record.problemName
+      questionsArray.push(theQuestion)
+    })
+    res.status(200).json({msg:"The subject Problems",problems:questionsArray})
+  }
+}
+// const facultyDashBoard=async(req,res)=>{
+const getQuestion=async(req,res)=>{
+  console.log("inside the getQuestion")
+const {semester,problemName,department,subject}=req.query;
+console.log(semester,problemName,department,subject)
+const theDepartment=department.toUpperCase();
+const theProblemName=problemName.toUpperCase();
+const theSubject=subject.toUpperCase();
+const theProblem=await questionsDatabase.findOne({semester:semester,department:theDepartment,
+  subject:theSubject,problemName:theProblemName})
+  console.log("ended")
+  if(theProblem==null){
+    res.json({msg:"this question doesnt exists"})
+  }else{
+    const theTestCases=theProblem.testCases
+    const theProblemStatement=theProblem.problemStatement
+    res.json({testCases:theTestCases,problemStatement:theProblemStatement})
+  }
+
+}
 
 // }
 
@@ -281,6 +331,9 @@ module.exports = {
   getStudent,
   getFaculty,
   getAllResults,
-  getResult
+  getResult,
+  addProblem,
+  getQuestions,
+  getQuestion
   // deleteSubject
 }
