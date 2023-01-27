@@ -34,9 +34,12 @@ login/staff/subjects/subject/addQuestionsWithOutput
 ->append department details 
 ->change password authentication from .env to database fetch
 ->delete Subject from staff
-->create questions database
-->add questions foreach subject
 ->validate and update resultss
+->add section to questions DB??
+
+
+->create questions database(--------done--------)
+->add questions foreach subject(--------done--------)
 
 
 
