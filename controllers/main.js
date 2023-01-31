@@ -1,8 +1,10 @@
 require('dotenv').config();
+const bcrypt = require('bcryptjs');
+
 const {studentDatabase,
   staffDatabase,
   resultsDatabase,
-  subjectsDatabase,questionsDatabase}=require('../model/schema')
+  subjectsDatabase,questionsDatabase,passwordsDatabase}=require('../model/schema')
 
 const jwt = require('jsonwebtoken')
 const { BadRequestError } = require('../errors');
@@ -13,15 +15,29 @@ const e = require('express');
 //   console.log(req.body)
 
 
+const addpasswords=async(req,res)=>{
+  console.log("passwords")
+  const{adminPass,staffPass,studentPass,jwtSecret}=req.body
+  console.log(req.body)
+  try{
+    await passwordsDatabase.create({adminPass,staffPass,studentPass,jwtSecret})
 
+  }catch(e){
+    console.log(e)
+  }
+  console.log("done!")
+  res.json({msg:"created the passwords"})
+}
 
 
 // }
 
 const register= async(req,res)=>{
+
   // const students=[]
   // const staffs=[]
   const { username, password , name , theSemester,studentId,staffId,section} = req.body
+  const passwordsRecord=await passwordsDatabase.findOne({_id:"63d8ff2a763e582eb05f6bd8"})
   console.log(req.body)
   console.log(username,password)
   console.log(staffId)
@@ -32,8 +48,14 @@ const register= async(req,res)=>{
   if(username=='admin'){
     console.log( "inside right direction")
     console.log(password)
-    console.log(process.env.Admin_pass)
-    if(password===process.env.Admin_pass){
+    // console.log(process.env.Admin_pass)
+
+
+    const adminPass=await passwordsRecord.adminPass
+    const isMatch= await bcrypt.compare(password,adminPass)
+    console.log(isMatch)
+
+    if(isMatch){
       // const id = new Date().getDate()
       console.log(`insisde the admin if block!`)
       const adminToken = jwt.sign({ password,username }, process.env.JWT_SECRET, {
@@ -45,14 +67,19 @@ const register= async(req,res)=>{
   }
   else if(username=='student'){
     console.log( "inside student right direction")
-    console.log(password,process.env.Student_pass)
+    console.log(password)
     console.log(name)
     console.log(theSemester)
     console.log(studentId)
 
     // await subjectsDatabase.create({name:'madam1',details:{semester:8,subjects:["dbms"]}})///remove when staff & subjects both are added
-
-    if(password==process.env.Student_pass){
+      console.log(passwordsRecord)
+      const studentPass=passwordsRecord.studentPass;
+      console.log("student password:",studentPass)
+      console.log("password given",password)
+    const isMatch= await bcrypt.compare(password,studentPass)
+    console.log("compared",isMatch)
+    if(isMatch){
       const duplicate= await studentDatabase.findOne({name:name})
       console.log(name)
       console.log(duplicate)
@@ -84,9 +111,12 @@ const register= async(req,res)=>{
   console.log("name: ",name)
   // console.log("subjects :",subjects)
   console.log(password)
-  console.log(process.env.Staff_pass)
-  if(password==process.env.Staff_pass){
+  // console.log(process.env.Staff_pass)
 
+  const staffPass=passwordsRecord.staffPass
+  const isMatch=await bcrypt.compare(password,staffPass)
+  console.log(isMatch)
+  if(isMatch){
     // if(!staffs.includes(name)){
     //   staffDatabase.create({name:name,subjects:subjects})
     //   staffs.push(name)}
@@ -118,6 +148,7 @@ const register= async(req,res)=>{
 const login = async (req, res) => {
   // const requestedName=req.body.name
   const { username ,theName ,staffSubjects,theId,subjects,section,semester,token,thePassword,password} = req.user
+  const passwordsRecord=await passwordsDatabase.findOne({_id:"63d8ff2a763e582eb05f6bd8"})
   console.log(req.user)
   console.log(username ,theName , section,semester)
   // const {password}=req.body
@@ -127,7 +158,10 @@ const login = async (req, res) => {
   if(username=='admin'){
     console.log( "inside right direction")
     console.log(password)
-    console.log(process.env.Admin_pass)
+    // console.log(process.env.Admin_pass)
+    const adminPass=passwordsRecord.adminPass
+    const isMatch=await bcrypt.compare(password,adminPass)
+    console.log(isMatch)
     if(password==process.env.Admin_pass){
       console.log(`insisde the admin if block!`)
       res.status(200).json({})
@@ -145,8 +179,12 @@ const login = async (req, res) => {
     console.log(password)
     // console.log(password)
     // const password='student'///make it manual------------------------------------
-    console.log(process.env.Student_pass)
-    if(password==process.env.Student_pass){
+    // console.log(process.env.Student_pass)
+    console.log("unnchanged")
+    const studentPass=passwordsRecord.studentPass
+    const isMatch=await bcrypt.compare(password,studentPass)
+    console.log(isMatch)
+    if(isMatch){
       console.log("innn")
     res.status(200).json({username,theName,semester,token,subjects,theId})
     }else{
@@ -160,7 +198,10 @@ const login = async (req, res) => {
     console.log(username)
     console.log(thePassword,"thepassword")
     console.log(process.env.Staff_pass)
-    if(thePassword==process.env.Staff_pass){
+    const staffPass=passwordsRecord.staffPass
+    const isMatch=await bcrypt.compare(password,staffPass)
+    console.log(isMatch)
+    if(isMatch){
       console.log("innnn")
       res.status(200).json({theName,staffSubjects,theId,username,token})
   }else{
@@ -334,6 +375,7 @@ module.exports = {
   getResult,
   addProblem,
   getQuestions,
-  getQuestion
+  getQuestion,
+  addpasswords
   // deleteSubject
 }

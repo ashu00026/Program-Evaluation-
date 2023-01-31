@@ -1,4 +1,5 @@
 const mongoose=require('mongoose')
+const bcrypt = require('bcryptjs');
 // const autoIncrement = require('mongoose-auto-increment');
 
 const studentSchema= new mongoose.Schema({
@@ -134,6 +135,34 @@ const questionsSchema=new mongoose.Schema({
     }
 })
 
+const passwordsSchema=new mongoose.Schema({
+    adminPass:{
+        type:String,
+        required:[true,"give a admin password"]
+    },
+    studentPass:{
+        type:String,
+        required:[true,"give Student Password"]
+    },
+    staffPass:{
+        type:String,
+        required:[true,"give staff Password"]
+    },
+    jwtSecret:{
+        type:String,
+        required:[true,"jwt password must be provided for security"]
+    }
+})
+
+passwordsSchema.pre('save', async function () {
+    const salt = await bcrypt.genSalt(10);
+    this.adminPass = await bcrypt.hash(this.adminPass, salt);
+    this.studentPass = await bcrypt.hash(this.studentPass, salt);
+    this.staffPass = await bcrypt.hash(this.staffPass, salt);
+    this.jwtSecret = await bcrypt.hash(this.jwtSecret, salt);
+  });
+
+const passwordsDatabase=mongoose.model('keysDb',passwordsSchema)
 const questionsDatabase=mongoose.model('questionsDatabase',questionsSchema)
 const studentDatabase =mongoose.model('studentdb', studentSchema)
 const staffDatabase=mongoose.model('staffdb',staffSchema)
@@ -145,5 +174,6 @@ module.exports={
     staffDatabase,
     resultsDatabase,
     subjectsDatabase,
-    questionsDatabase
+    questionsDatabase,
+    passwordsDatabase
 }
