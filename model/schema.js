@@ -7,6 +7,7 @@ const studentSchema= new mongoose.Schema({
         type:Number,
         required:[true,'Id must be provided'],
         trim:true,
+        unique:true,
     },
     name:{
         type:String,
@@ -21,6 +22,19 @@ const studentSchema= new mongoose.Schema({
     section:{
         type:String,
         required:[true,'section must be provided']
+    },
+    email:{
+        type:String,
+        required:[true,'students email is required'],
+        match: [
+            /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
+            'Please provide a valid email',
+        ],
+        unique: true
+    },
+    mobileNumber:{
+        type:Number,
+        unique:true
     }
     //department
 })
@@ -64,11 +78,28 @@ const staffSchema=new mongoose.Schema({
         trim:true,
         maxlength:[20,'name cannot be more than 20 characters']
     },
+    email:{
+        type:String,
+        required:[true,'staffs email is required'],
+        match: [
+            /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
+            'Please provide a valid email',
+        ],
+        unique: true
+    },
+    mobileNumber:{
+        type:Number,
+        unique:true
+    },
     id:{
         type:String,
         required:[true,'please assign a faculty ID'],
-        unique:[true,'staff with the id is already present'],
+        unique:true
     },
+    department:{
+        type:String,
+        reqired:[true,'please provide the depatment details']
+    }
     // department:{
     //     type:String,
     //     required:[true,'staff department is required']

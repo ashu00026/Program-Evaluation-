@@ -36,7 +36,7 @@ const register= async(req,res)=>{
 
   // const students=[]
   // const staffs=[]
-  const { username, password , name , theSemester,studentId,staffId,section} = req.body
+  const { username, password , name , theSemester,studentId,staffId,section,email,mobileNumber,department} = req.body
   const passwordsRecord=await passwordsDatabase.findOne({_id:"63d8ff2a763e582eb05f6bd8"})
   console.log(req.body)
   console.log(username,password)
@@ -80,14 +80,16 @@ const register= async(req,res)=>{
     const isMatch= await bcrypt.compare(password,studentPass)
     console.log("compared",isMatch)
     if(isMatch){
-      const duplicate= await studentDatabase.findOne({name:name})
+      const duplicate= await studentDatabase.findOne({name:name,studentId})
       console.log(name)
       console.log(duplicate)
-      if(duplicate==null){
-        console.log('insside the duplicates')
-        const arr = new Array(10).fill(0);
-        // const arr[]={0}
-        await studentDatabase.create({studentId:studentId,name:name,semester:theSemester,section:section})
+      
+        try{
+          if(duplicate==null){
+            console.log('insside the duplicates')
+            const arr = new Array(10).fill(0);
+           // const arr[]={0}
+        await studentDatabase.create({studentId:studentId,name:name,semester:theSemester,section:section,email,mobileNumber})
         // const test=await subjectsDatabase.find()
         // console.log("testing",test)
         const subjectRecords=await subjectsDatabase.find({'details.semester':Number(theSemester),'details.section':section})
@@ -98,15 +100,22 @@ const register= async(req,res)=>{
             resultsDatabase.create({studentid:studentId,studentName:name,semester:theSemester,section:section,subjectName:subjectName,results:arr})
           })
         });
+        const studentToken = jwt.sign({username,password}, process.env.JWT_SECRET, {
+          expiresIn: '30d',
+        })
+        console.log(studentToken)
+        res.status(200).json({ msg: 'student created',"name of the student: ":name,"semester":theSemester,section:section,"token":studentToken,email,mobileNumber })
+        
+      }else{
+        res.json({"msg":"please provide unique id"})
+      }   }catch(e){
+        res.json({msg:e.message})
+
       }
-      // const id = new Date().getDate()
-      const studentToken = jwt.sign({username,password}, process.env.JWT_SECRET, {
-        expiresIn: '30d',
-      })
-      console.log(studentToken)
-      res.status(200).json({ msg: 'student created',"name of the student: ":name,"semester":theSemester,section:section,"token":studentToken })
-  } 
-}else if(username=='staff'){
+}else{
+  res.json({msg:"wrong credentials"})
+}
+} else if(username=='staff'){
   console.log( "inside right direction")
   console.log("name: ",name)
   // console.log("subjects :",subjects)
@@ -124,14 +133,14 @@ const register= async(req,res)=>{
     console.log(duplicateStaff)
     try{
         if(duplicateStaff==null){
-          await staffDatabase.create({name:name,id:staffId})//try catch
+          await staffDatabase.create({name:name,id:staffId,email,mobileNumber})//try catch
           // const id = new Date().getDate()
           console.log(`insisde the staff if block!`)
           const staffToken = jwt.sign({password,username}, process.env.JWT_SECRET, {
           expiresIn: '30d',
         })
           console.log(staffToken)
-          res.status(200).json({ msg: 'staff created', "Name of Staff: ":name ,"token":staffToken })
+          res.status(200).json({ msg: 'staff created', "Name of Staff: ":name ,"token":staffToken,email,mobileNumber,department })
         }else{
           res.status(200).json({msg:`staff with name ${name} and id ${staffId} already exists`})
         }
@@ -186,7 +195,7 @@ const login = async (req, res) => {
     console.log(isMatch)
     if(isMatch){
       console.log("innn")
-    res.status(200).json({username,theName,semester,token,subjects,theId})
+    res.status(200).json({username,theName,section,semester,token,subjects,theId})
     }else{
       res.status(401).json({msg:"wrong credentials"})
     }
@@ -285,7 +294,7 @@ const getAllResults=async(req,res)=>{
   console.log(results)
   if(!(results==null)){
     const theResult=[]
-    console.log('inside')
+    console.log(results)
   results.forEach(record=>{
     const name=record.studentName
     const ID=record.studentid
@@ -304,6 +313,9 @@ const getResult=async(req,res)=>{
   console.log(ID,theSubject)
   const studentRecord=await studentDatabase.findOne({studentId:ID})
   const theStudentName=studentRecord.name
+  console.log(theStudentName)
+  console.log(theSubject)
+  console.log(ID)
   const result=await resultsDatabase.findOne({studentid:ID,subjectName:theSubject})
   console.log(result)
   const theResult=result.results

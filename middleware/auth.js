@@ -14,7 +14,7 @@ const authenticationMiddleware = async (req, res, next) => {
     next()
   }else{
     const authHeader = req.headers.authorization
-    const {theUser,thePassword,theId,theName}=req.body
+    const {theUser,thePassword,email}=req.body
     if (!theUser || !thePassword) {
       throw new BadRequestError('Please provide email and password')
     }else{
@@ -43,12 +43,14 @@ const authenticationMiddleware = async (req, res, next) => {
                 console.log(password)
                 console.log(thePassword)
                 if(password==thePassword){
-                  const theStaff= await staffDatabase.findOne({name:theName,id:theId})
+                  const theStaff= await staffDatabase.findOne({email})
                 if(theStaff==null){
                 res.json({msg:'wrong credentials'})
               }
               else{
                 const staffSubjects=[]
+                const theId=theStaff.id
+                const theName=theStaff.name
                 const subjectsRecord=await subjectsDatabase.find({name:theName})
                 subjectsRecord.forEach(record => {
                   const subjects=record.details.subjects
@@ -67,10 +69,13 @@ const authenticationMiddleware = async (req, res, next) => {
               }
               else if(username=='student'){
                 if(password==thePassword){
-                  console.log(theName)
-                  console.log(theId)
-                  const theStudent= await studentDatabase.findOne({name:theName,studentId:Number(theId)})
+                  // console.log(theName)
+                  // console.log(theId)
+                  const theStudent= await studentDatabase.findOne({email})
                   console.log("the STudent",theStudent)
+                  const theId=theStudent.studentId
+                  const theName=theStudent.name
+                  
 
                   if(theStudent==null){
                     res.json({msg:'wrong credentials'})
@@ -81,7 +86,7 @@ const authenticationMiddleware = async (req, res, next) => {
                   const particularSection=theStudent.section
                   const subjectsRecords=await subjectsDatabase.find({'details.semester':particularSemister,'details.section':particularSection})
                   subjectsRecords.forEach(record=>{
-                    theSubjects=record.details.subjects
+                    const theSubjects=record.details.subjects
                     theSubjects.forEach(theSubject=>{
                       subjects.push(theSubject)
                     })
