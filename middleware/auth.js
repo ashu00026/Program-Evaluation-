@@ -88,13 +88,13 @@ const authenticationMiddleware = async (req, res, next) => {
                   // console.log(theId)
                   const theStudent= await studentDatabase.findOne({email})
                   console.log("the STudent",theStudent)
-                  const theId=theStudent.studentId
-                  const theName=theStudent.name
-
+                  
                   if(theStudent==null){
                     console.log("-")
                     res.json({msg:'wrong credentials'})
                   }else{
+                    const theId=theStudent.studentId
+                    const theName=theStudent.name
                     const subjects=[]
                   console.log(theStudent)
                   const particularSemister=theStudent.semester

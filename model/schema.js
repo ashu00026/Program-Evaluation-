@@ -35,6 +35,10 @@ const studentSchema= new mongoose.Schema({
     mobileNumber:{
         type:Number,
         unique:true
+    },
+    department:{
+        type:String,
+        required:[true,'please provide department of the student']
     }
     //department
 })
@@ -64,10 +68,10 @@ const resultsSchema=new mongoose.Schema({
         type:Number,
         default:0
     }],
-    // department:{
-    //     type:String,
-    //     required:[true,'department should be mentioned']
-    // },
+    department:{
+        type:String,
+        required:[true,'department should be mentioned']
+    }
 })
 
 
@@ -123,18 +127,22 @@ const subjectsSchema=new mongoose.Schema({
             required:[true,'provide section']
         },
         subjects:[{
-        type:String,}],
-        // deparment:{
-        //     type:String,
-        //     required:[true,'mention departments']
-        // }
+        type:String,}],   
 },
+department:{
+    type:String,
+    required:[true,'mention departments']
+}
 })
 
 const questionsSchema=new mongoose.Schema({
     problemName:{
         type:String,
         required:[true,"please provide a short name for the problem"]
+    },
+    questionNumber:{
+        type:Number,
+        required:[true,"please provide a question number"]
     },
     problemStatement:{
         type:String,

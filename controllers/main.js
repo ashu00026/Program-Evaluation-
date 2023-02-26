@@ -108,7 +108,8 @@ const register= async(req,res)=>{
             console.log('insside the duplicates')
             const arr = new Array(10).fill(0);
            // const arr[]={0}
-        await studentDatabase.create({studentId:studentId,name:name,semester:theSemester,section:section,email,mobileNumber})
+           const theDepartmentOfStudent=await department.toUpperCase()
+        await studentDatabase.create({studentId:studentId,name:name,semester:theSemester,section:section,email,mobileNumber,department:theDepartmentOfStudent})
         // const test=await subjectsDatabase.find()
         // console.log("testing",test)
         const subjectRecords=await subjectsDatabase.find({'details.semester':Number(theSemester),'details.section':section})
@@ -116,14 +117,14 @@ const register= async(req,res)=>{
         subjectRecords.forEach(subjectRecord => {
           const subjectsArr=subjectRecord.details.subjects
           subjectsArr.forEach(subjectName=>{
-            resultsDatabase.create({studentid:studentId,studentName:name,semester:theSemester,section:section,subjectName:subjectName,results:arr})
+            resultsDatabase.create({studentid:studentId,studentName:name,semester:theSemester,section:section,department:theDepartmentOfStudent,subjectName:subjectName,results:arr})
           })
         });
         // const studentToken = jwt.sign({username,password}, process.env.JWT_SECRET, {
         //   expiresIn: '30d',
         // })
         // console.log(studentToken)
-        res.status(200).json({ msg: 'student created',"name of the student: ":name,"semester":theSemester,section:section,
+        res.status(200).json({ msg: 'student created',"name of the student: ":name,"semester":theSemester,section:section,id:studentId,
         // "token":studentToken,
         email,mobileNumber })
         
@@ -142,6 +143,7 @@ const register= async(req,res)=>{
   // console.log("subjects :",subjects)
   console.log(password)
   // console.log(process.env.Staff_pass)
+  const theDepartmentOfUser=await department.toUpperCase()
 
   const staffPass=passwordsRecord.staffPass
   const isMatch=await bcrypt.compare(password,staffPass)
@@ -154,7 +156,7 @@ const register= async(req,res)=>{
     console.log(duplicateStaff)
     try{
         if(duplicateStaff==null){
-          await staffDatabase.create({name:name,id:staffId,email,mobileNumber})//try catch
+          await staffDatabase.create({name:name,id:staffId,email,mobileNumber,department:theDepartmentOfUser})//try catch
           // const id = new Date().getDate()
           console.log(`insisde the staff if block!`)
         //   const staffToken = jwt.sign({password,username}, process.env.JWT_SECRET, {
@@ -404,10 +406,11 @@ const addSubject=async(req,res)=>{
 
 	//code goes here
   console.log("inside add subject")
-  const {name,semester,subject,section}=req.body
+  const {name,semester,subject,section,department}=req.body
+  const theDepartmentOfStudent=await department.toUpperCase()
   try{
     const allSubjectsOfSemester=[]
-    const nonDuplicateSubjectRecord=await subjectsDatabase.find({'details.semester':semester,'details.section':section})
+    const nonDuplicateSubjectRecord=await subjectsDatabase.find({'details.semester':semester,'details.section':section,department:theDepartmentOfStudent})
     nonDuplicateSubjectRecord.forEach(record=>{
       const beforeSubjects=record.details.subjects
       beforeSubjects.forEach(subject=>{
@@ -418,7 +421,7 @@ const addSubject=async(req,res)=>{
         res.status(200).json({msg:`the subject is already assigned for the section`})
     }else{
         // await subjectsDatabase.create({name:name,details:{semester:semester,subjects:arrSubjects}})
-        const duplicateEntry=await subjectsDatabase.findOne({name:name,'details.semester':semester,'details.section':section})
+        const duplicateEntry=await subjectsDatabase.findOne({name:name,'details.semester':semester,'details.section':section,department:theDepartmentOfStudent})
         console.log(duplicateEntry)
         // console.log(duplicateEntry.details.subjects)
         if(duplicateEntry == null ){
@@ -426,7 +429,18 @@ const addSubject=async(req,res)=>{
           const arrSubjects=[]
           arrSubjects.push(subject)
           console.log(arrSubjects)
-          await subjectsDatabase.create({name:name,details:{semester:semester,section:section,subjects:arrSubjects}})
+          await subjectsDatabase.create({name:name,department:theDepartmentOfStudent,details:{semester:semester,section:section,subjects:arrSubjects}})
+          const theStudentsAlreadyPresent=await studentDatabase.find({semester,department:theDepartmentOfStudent,section})
+          theStudentsAlreadyPresent.forEach(async student=>{
+            const arr = new Array(10).fill(0);
+            const studentId=await student.studentId
+            const theStudentName=await student.name
+            const theSemester=await student.semester
+            const TheSection=await student.section
+            const theDepartmentofHim=await student.department
+            const subjectName=subject
+            await resultsDatabase.create({studentid:studentId,studentName:theStudentName,semester:theSemester,section:TheSection,department:theDepartmentofHim,subjectName:subjectName,results:arr})
+          })
           res.status(200).json({msg:`subject added to the faculty`,presentSubjects:arrSubjects})
         }else{
           const presentSubjects=duplicateEntry.details.subjects
@@ -434,7 +448,21 @@ const addSubject=async(req,res)=>{
             //update the subjects array in the db
             await presentSubjects.push(subject)
             console.log(presentSubjects);
-            await subjectsDatabase.findOneAndUpdate({name:name,'details.semester':semester,'details.section':section},{'details.subjects':presentSubjects},{new:true,runValidators: true})
+            await subjectsDatabase.findOneAndUpdate({name:name,department:theDepartmentOfStudent,'details.semester':semester,'details.section':section},{'details.subjects':presentSubjects},{new:true,runValidators: true})
+            const theStudentsAlreadyPresent=await studentDatabase.find({semester,department:theDepartmentOfStudent,section})
+            theStudentsAlreadyPresent.forEach(async student=>{
+              const arr = new Array(10).fill(0);
+              const studentId=await student.studentId
+              const theStudentName=await student.name
+              const theSemester=await student.semester
+              const TheSection=await student.section
+              const theDepartmentofHim=await student.department
+              const subjectName=subject
+              await resultsDatabase.create({studentid:studentId,studentName:theStudentName,semester:theSemester,section:TheSection,department:theDepartmentofHim,subjectName:subjectName,results:arr})
+
+
+
+            })
             res.status(200).json({msg:`updated the subject of the staff ${name}`,subjects:presentSubjects})
           }else{
             res.status(200).json({msg:`the subject is already present for the staff ${name}`, presentsubjects:presentSubjects})
@@ -648,13 +676,13 @@ const addProblem=async(req,res)=>{
         const { username} = decoded
         if(username=="staff"){//roles
           console.log("inside add prblem")
-          const {problemStatement,testCases,subject,semester,department,problemName}=req.body
-          const theproblemName=problemName.toUpperCase();
-          const theSubject=subject.toUpperCase();
-          const theDepartment=department.toUpperCase();
+          const {problemStatement,testCases,subject,semester,department,problemName,questionNumber}=req.body
+          const theproblemName=await problemName.toUpperCase();
+          const theSubject=await subject.toUpperCase();
+          const theDepartment=await department.toUpperCase();
           var testCaseCount=testCases.length
           await questionsDatabase.create({problemStatement:problemStatement,problemName:theproblemName,
-    testCases:testCases,subject:theSubject,testCasesCount:testCaseCount,semester:semester,department:theDepartment
+    testCases:testCases,subject:theSubject,testCasesCount:testCaseCount,semester:semester,department:theDepartment,questionNumber
   })
   res.status(200).json({msg:"problem added to subject!"})
 	
@@ -698,8 +726,8 @@ const getQuestions=async(req,res)=>{
   console.log("inside getQuestions")
   const {subject,semester,department}=req.body
   console.log(subject,semester,department)
-  const theDepartment=department.toUpperCase();
-  const theSubject=subject.toUpperCase();
+  const theDepartment=await department.toUpperCase();
+  const theSubject=await subject.toUpperCase();
   const questions=await questionsDatabase.find({subject:theSubject,semester:semester,department:theDepartment})
   console.log(questions)
   if(questions.length==0){
@@ -718,18 +746,19 @@ const getQuestion=async(req,res)=>{
   console.log("inside the getQuestion")
 const {semester,problemName,department,subject}=req.query;
 console.log(semester,problemName,department,subject)
-const theDepartment=department.toUpperCase();
-const theProblemName=problemName.toUpperCase();
-const theSubject=subject.toUpperCase();
+const theDepartment=await department.toUpperCase();
+const theProblemName=await problemName.toUpperCase();
+const theSubject=await subject.toUpperCase();
 const theProblem=await questionsDatabase.findOne({semester:semester,department:theDepartment,
   subject:theSubject,problemName:theProblemName})
   console.log("ended")
   if(theProblem==null){
     res.json({msg:"this question doesnt exists"})
   }else{
+    const theQuestionNumber=theProblem.questionNumber
     const theTestCases=theProblem.testCases
     const theProblemStatement=theProblem.problemStatement
-    res.json({testCases:theTestCases,problemStatement:theProblemStatement})
+    res.json({testCases:theTestCases,questionNumber:theQuestionNumber,problemStatement:theProblemStatement})
   }
 
 }
