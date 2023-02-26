@@ -1,7 +1,8 @@
 const jwt = require('jsonwebtoken')
 const { UnauthenticatedError } = require('../errors')
-const { staffDatabase, subjectsDatabase, studentDatabase } = require('../model/schema')
+const { staffDatabase, subjectsDatabase, studentDatabase,passwordsDatabase } = require('../model/schema')
 const { BadRequestError } = require('../errors');
+const bcrypt = require('bcryptjs');
 
 
 const authenticationMiddleware = async (req, res, next) => {
@@ -18,13 +19,19 @@ const authenticationMiddleware = async (req, res, next) => {
     if (!theUser || !thePassword) {
       throw new BadRequestError('Please provide email and password')
     }else{
+      let token="";
+      const username=theUser
       if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        throw new UnauthenticatedError('No token provided')
-      }
-    
-      const token = authHeader.split(' ')[1]
-      console.log(token)
-    
+        console.log("++++++++++++++++++++")
+        // throw new UnauthenticatedError('No token provided')
+        token=jwt.sign({username}, process.env.JWT_SECRET, {
+          expiresIn: '30d',
+        })
+      }else{
+        console.log("------------------")
+        token = authHeader.split(' ')[1]
+        console.log(token)
+      } 
       try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET,async function (err, decoded){
           console.log("22222");
@@ -37,15 +44,21 @@ const authenticationMiddleware = async (req, res, next) => {
               // req.decoded = decoded;
               // req.authenticated = true;
               console.log(decoded)
-              const { username,password} = decoded
+              const { username} = decoded
               // const password='student'
+              const passwordsRecord=await passwordsDatabase.findOne({_id:"63d8ff2a763e582eb05f6bd8"})
               if(username=='staff'){
-                console.log(password)
+                // console.log(password)
                 console.log(thePassword)
-                if(password==thePassword){
+                const password=await passwordsRecord.staffPass
+                const isMatch=await bcrypt.compare(thePassword,password)
+
+                if(isMatch){
+                  console.log(email)
                   const theStaff= await staffDatabase.findOne({email})
                 if(theStaff==null){
-                res.json({msg:'wrong credentials'})
+                  console.log("+")
+                res.json({msg:'wrong credentials ++++'})
               }
               else{
                 const staffSubjects=[]
@@ -68,16 +81,18 @@ const authenticationMiddleware = async (req, res, next) => {
               }
               }
               else if(username=='student'){
-                if(password==thePassword){
+                const password=await passwordsRecord.studentPass
+                const isMatch=await bcrypt.compare(thePassword,password)
+                if(isMatch){
                   // console.log(theName)
                   // console.log(theId)
                   const theStudent= await studentDatabase.findOne({email})
                   console.log("the STudent",theStudent)
                   const theId=theStudent.studentId
                   const theName=theStudent.name
-                  
 
                   if(theStudent==null){
+                    console.log("-")
                     res.json({msg:'wrong credentials'})
                   }else{
                     const subjects=[]
