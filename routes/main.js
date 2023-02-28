@@ -2,7 +2,7 @@ const express = require('express')
 const router = express.Router()
 const { login, 
     register,addSubject,getStudent,getFaculty,getAllResults,getResult,
-    addProblem,getQuestions,getQuestion,addpasswords
+    addProblem,getQuestions,getQuestion,addpasswords,submitResult
     // deleteSubject 
 } = require('../controllers/main')
 
@@ -17,6 +17,7 @@ router.route('/faculty/addQuestions').post(addProblem)
 router.route('/student/getQuestions').post(getQuestions)
 router.route('/student/getQuestion').get(getQuestion)
 router.route('/addpasswords').post(addpasswords)
+router.route('/submitResult').patch(submitResult)
 // router.route('/assistant/register/f/deleteSubjects').post(deleteSubject)
     
     

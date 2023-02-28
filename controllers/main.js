@@ -763,6 +763,23 @@ const theProblem=await questionsDatabase.findOne({semester:semester,department:t
 
 }
 
+const submitResult=async(req,res)=>{
+  const {studentid,semester,section,department,questionNumber,subjectName,marks}=req.body;
+  try{
+    const theResultRecord=await resultsDatabase.findOne({studentid,subjectName});
+    const theArray=theResultRecord.results
+    theArray[questionNumber-1]=await marks;
+    await resultsDatabase.findOneAndUpdate({studentid,subjectName},{results:theArray})
+    console.log(theArray)
+    res.json({msg:"submitted sucessfully"})
+
+  }catch(e){
+    console.log(e)
+  }
+
+
+}
+
 // }
 
 module.exports = {
@@ -776,6 +793,7 @@ module.exports = {
   addProblem,
   getQuestions,
   getQuestion,
-  addpasswords
+  addpasswords,
+  submitResult
   // deleteSubject
 }
