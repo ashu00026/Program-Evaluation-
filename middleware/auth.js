@@ -46,6 +46,12 @@ const authenticationMiddleware = async (req, res, next) => {
               console.log(decoded)
               const { username} = decoded
               // const password='student'
+              console.log(theUser,username,"+++++++++++")
+              // if(username){
+                if(username!=theUser){
+                  res.json({msg:"you are not authorized to access this route"})
+                }
+              // }
               const passwordsRecord=await passwordsDatabase.findOne({_id:"63d8ff2a763e582eb05f6bd8"})
               if(username=='staff'){
                 // console.log(password)
