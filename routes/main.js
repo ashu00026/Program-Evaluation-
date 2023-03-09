@@ -13,9 +13,11 @@ const {
   getQuestion,
   addpasswords,
   submitResult,
+  deleteQuestion
   // deleteSubject
 } = require("../controllers/main");
 
+router.route("/f/deleteQuestion").post(deleteQuestion)
 router.route("/assistant/register").post(register);
 router.route("/login").post(login);
 router.route("/assistant/register/f/addSubjects").post(addSubject);

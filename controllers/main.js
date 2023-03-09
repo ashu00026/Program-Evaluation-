@@ -39,6 +39,29 @@ const addpasswords = async (req, res) => {
 
 // }
 
+const deleteQuestion = async (req, res) => {
+  try {
+    const { id } = req.body;
+    console.log(id)
+    const deleteReq = await questionsDatabase.findByIdAndDelete(
+      id,
+      (err, done) => {
+        if (err) {
+          res.json({ msg: "nnot possible" });
+        } else {
+          res.json({ msg: "deleted successfully",object:done });
+        }
+      }
+    );
+    // if(deleteReq){
+    //   res.json({msg:"deleted sucessfully"})
+    // }else{
+    //   res.json()
+
+    // }
+  } catch (e) {}
+};
+
 const register = async (req, res) => {
   const authHeader = req.headers.authorization;
   console.log(
@@ -235,11 +258,9 @@ const register = async (req, res) => {
                         department,
                       });
                     } else {
-                      res
-                        .status(200)
-                        .json({
-                          msg: `staff with name ${name} and id ${staffId} already exists`,
-                        });
+                      res.status(200).json({
+                        msg: `staff with name ${name} and id ${staffId} already exists`,
+                      });
                     }
                   } catch (err) {
                     console.log(err.message);
@@ -502,11 +523,9 @@ const addSubject = async (req, res) => {
                 });
               });
               if (allSubjectsOfSemester.includes(subject)) {
-                res
-                  .status(200)
-                  .json({
-                    msg: `the subject is already assigned for the section`,
-                  });
+                res.status(200).json({
+                  msg: `the subject is already assigned for the section`,
+                });
               } else {
                 // await subjectsDatabase.create({name:name,details:{semester:semester,subjects:arrSubjects}})
                 const duplicateEntry = await subjectsDatabase.findOne({
@@ -554,12 +573,10 @@ const addSubject = async (req, res) => {
                       results: arr,
                     });
                   });
-                  res
-                    .status(200)
-                    .json({
-                      msg: `subject added to the faculty`,
-                      presentSubjects: arrSubjects,
-                    });
+                  res.status(200).json({
+                    msg: `subject added to the faculty`,
+                    presentSubjects: arrSubjects,
+                  });
                 } else {
                   const presentSubjects = duplicateEntry.details.subjects;
                   if (!presentSubjects.includes(subject)) {
@@ -600,19 +617,15 @@ const addSubject = async (req, res) => {
                         results: arr,
                       });
                     });
-                    res
-                      .status(200)
-                      .json({
-                        msg: `updated the subject of the staff ${name}`,
-                        subjects: presentSubjects,
-                      });
+                    res.status(200).json({
+                      msg: `updated the subject of the staff ${name}`,
+                      subjects: presentSubjects,
+                    });
                   } else {
-                    res
-                      .status(200)
-                      .json({
-                        msg: `the subject is already present for the staff ${name}`,
-                        presentsubjects: presentSubjects,
-                      });
+                    res.status(200).json({
+                      msg: `the subject is already present for the staff ${name}`,
+                      presentsubjects: presentSubjects,
+                    });
                   }
                 }
               }
@@ -759,13 +772,18 @@ const getAllResults = async (req, res) => {
             if (!(results == null)) {
               const theResult = [];
               console.log(results);
-              let count=0;
+              let count = 0;
               results.forEach((record) => {
                 const name = record.studentName;
                 const ID = record.studentid;
                 const results = record.results;
-                count=count+1;
-                theResult.push({"id":count,name,"jntu":ID, "expmarks":results });
+                count = count + 1;
+                theResult.push({
+                  id: count,
+                  name,
+                  jntu: ID,
+                  expmarks: results,
+                });
               });
               res.status(200).json({ Result: theResult });
             } else {
@@ -817,14 +835,12 @@ const getResult = async (req, res) => {
   });
   console.log(result);
   const theResult = result.results;
-  res
-    .status(200)
-    .json({
-      studentId: ID,
-      name: theStudentName,
-      subject: theSubject,
-      Result: theResult,
-    });
+  res.status(200).json({
+    studentId: ID,
+    name: theStudentName,
+    subject: theSubject,
+    Result: theResult,
+  });
 };
 
 const addProblem = async (req, res) => {
@@ -938,7 +954,7 @@ const getQuestion = async (req, res) => {
     subject: theSubject,
     problemName: theProblemName,
   });
-  console.log(theProblem)
+  console.log(theProblem);
   console.log("ended");
   if (theProblem == null) {
     res.json({ msg: "this question doesnt exists" });
@@ -946,7 +962,7 @@ const getQuestion = async (req, res) => {
     const theQuestionNumber = theProblem.questionNumber;
     const theTestCases = theProblem.testCases;
     const theProblemStatement = theProblem.problemStatement;
-    const uniqueId=theProblem["_id"];
+    const uniqueId = theProblem["_id"];
     res.json({
       testCases: theTestCases,
       questionNumber: theQuestionNumber,
@@ -1000,4 +1016,5 @@ module.exports = {
   addpasswords,
   submitResult,
   // deleteSubject
+  deleteQuestion,
 };
