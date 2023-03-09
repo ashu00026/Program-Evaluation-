@@ -40,26 +40,44 @@ const addpasswords = async (req, res) => {
 // }
 
 const deleteQuestion = async (req, res) => {
-  try {
-    const { id } = req.body;
-    console.log(id)
-    const deleteReq = await questionsDatabase.findByIdAndDelete(
-      id,
-      (err, done) => {
-        if (err) {
-          res.json({ msg: "nnot possible" });
-        } else {
-          res.json({ msg: "deleted successfully",object:done });
+  const authHeader = req.headers.authorization;
+  console.log(authHeader)
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    res.status(401).json({ msg: "unauthenticated User" });
+  } else {
+    const token = authHeader.split(" ")[1];
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET,
+      async (err, decoded) => {
+        const { id } = req.body;
+        console.log(id);
+        const { username } = decoded;
+        if (username == "staff") {
+          const deleteReq = await questionsDatabase.findByIdAndDelete(
+            id,
+            (err, done) => {
+              if (err) {
+                res.json({ msg: "nnot possible" });
+              } else {
+                if(done==null)res.json({msg:"no question found "})
+                else{
+                  res.json({ msg: "deleted successfully", object: done });
+                }
+              }
+            }
+          );
         }
       }
     );
-    // if(deleteReq){
-    //   res.json({msg:"deleted sucessfully"})
-    // }else{
-    //   res.json()
+  }
 
-    // }
-  } catch (e) {}
+  // if(deleteReq){
+  //   res.json({msg:"deleted sucessfully"})
+  // }else{
+  //   res.json()
+
+  // }
 };
 
 const register = async (req, res) => {
