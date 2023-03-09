@@ -41,7 +41,7 @@ const addpasswords = async (req, res) => {
 
 const deleteQuestion = async (req, res) => {
   const authHeader = req.headers.authorization;
-  console.log(authHeader)
+  console.log(authHeader);
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     res.status(401).json({ msg: "unauthenticated User" });
   } else {
@@ -60,8 +60,8 @@ const deleteQuestion = async (req, res) => {
               if (err) {
                 res.json({ msg: "nnot possible" });
               } else {
-                if(done==null)res.json({msg:"no question found "})
-                else{
+                if (done == null) res.json({ msg: "no question found " });
+                else {
                   res.json({ msg: "deleted successfully", object: done });
                 }
               }
@@ -893,6 +893,8 @@ const addProblem = async (req, res) => {
               department,
               problemName,
               questionNumber,
+              sampleOutput,
+              sampleInput,
             } = req.body;
             const theproblemName = await problemName.toUpperCase();
             const theSubject = await subject.toUpperCase();
@@ -907,6 +909,8 @@ const addProblem = async (req, res) => {
               semester: semester,
               department: theDepartment,
               questionNumber,
+              sampleInput,
+              sampleOutput,
             });
             res.status(200).json({ msg: "problem added to subject!" });
 
@@ -980,12 +984,16 @@ const getQuestion = async (req, res) => {
     const theQuestionNumber = theProblem.questionNumber;
     const theTestCases = theProblem.testCases;
     const theProblemStatement = theProblem.problemStatement;
+    const theProblemInput = theProblem.sampleInput;
+    const theProblemOutput = theProblem.sampleOutput;
     const uniqueId = theProblem["_id"];
     res.json({
       testCases: theTestCases,
       questionNumber: theQuestionNumber,
       problemStatement: theProblemStatement,
       uniqueId,
+      theProblemInput,
+      theProblemOutput,
     });
   }
 };

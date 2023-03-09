@@ -140,6 +140,12 @@ const subjectsSchema = new mongoose.Schema({
 });
 
 const questionsSchema = new mongoose.Schema({
+  sampleInput:{
+
+  },
+  sampleOutput:{
+
+  },
   problemName: {
     type: String,
     required: [true, "please provide a short name for the problem"],
