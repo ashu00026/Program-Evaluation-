@@ -938,6 +938,7 @@ const getQuestion = async (req, res) => {
     subject: theSubject,
     problemName: theProblemName,
   });
+  console.log(theProblem)
   console.log("ended");
   if (theProblem == null) {
     res.json({ msg: "this question doesnt exists" });
@@ -945,10 +946,12 @@ const getQuestion = async (req, res) => {
     const theQuestionNumber = theProblem.questionNumber;
     const theTestCases = theProblem.testCases;
     const theProblemStatement = theProblem.problemStatement;
+    const uniqueId=theProblem["_id"];
     res.json({
       testCases: theTestCases,
       questionNumber: theQuestionNumber,
       problemStatement: theProblemStatement,
+      uniqueId,
     });
   }
 };
