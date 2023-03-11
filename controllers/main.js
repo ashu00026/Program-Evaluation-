@@ -608,7 +608,7 @@ const addSubject = async (req, res) => {
                     section,
                   });
                   theStudentsAlreadyPresent.forEach(async (student) => {
-                    const arr = new Array(10).fill(0);
+                    const arr = new Array(19).fill(0);
                     const studentId = await student.studentId;
                     const theStudentName = await student.name;
                     const theSemester = await student.semester;
@@ -652,7 +652,7 @@ const addSubject = async (req, res) => {
                         section,
                       });
                     theStudentsAlreadyPresent.forEach(async (student) => {
-                      const arr = new Array(10).fill(0);
+                      const arr = new Array(19).fill(0);
                       const studentId = await student.studentId;
                       const theStudentName = await student.name;
                       const theSemester = await student.semester;
@@ -770,6 +770,9 @@ const getFaculty = async (req, res) => {
             const subjects = await subjectsDatabase.find({ name: staffName });
             console.log(theStaff);
             console.log(subjects);
+            console.log(subjects[0].details);
+            console.log(subjects[1].details);
+            console.log(subjects[2].details);
             res.status(200).json({ staff: theStaff, subjects: subjects });
           } else {
             res
