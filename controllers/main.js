@@ -994,11 +994,13 @@ const getQuestions = async (req, res) => {
     questions.forEach((record) => {
       const theQuestion = record.problemName;
       const theProblemStatement=record.problemStatement;
-      questionsArray.push({theQuestion,theProblemStatement});
+      const theID=record["_id"]
+      questionsArray.push({theQuestion,theProblemStatement,theID});
+
     });
     res
       .status(200)
-      .json({ msg: "The subject Problems", problems: questionsArray });
+      .json({ msg: "The subject Problems", problems: questionsArray, });
   }
 };
 // const facultyDashBoard=async(req,res)=>{
@@ -1052,6 +1054,8 @@ const submitResult = async (req, res) => {
       studentid,
       subjectName,
     });
+    const noOfExpQuestions=await questionsDatabase.find({subject:subjectName,semester,department})
+    console.log(noOfExpQuestions)
     const theArray = theResultRecord.results;
     theArray[questionNumber - 1] = await marks;
     await resultsDatabase.findOneAndUpdate(
