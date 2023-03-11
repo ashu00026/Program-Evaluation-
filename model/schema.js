@@ -110,6 +110,40 @@ const staffSchema = new mongoose.Schema({
   //     required:[true,'staff department is required']
   // }
 });
+const adminSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: [true, "provide name"],
+    trim: true,
+    maxlength: [20, "name cannot be more than 20 characters"],
+  },
+  email: {
+    type: String,
+    required: [true, "staffs email is required"],
+    match: [
+      /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
+      "Please provide a valid email",
+    ],
+    unique: true,
+  },
+  mobileNumber: {
+    type: Number,
+    unique: true,
+  },
+  id: {
+    type: String,
+    required: [true, "please assign a faculty ID"],
+    unique: true,
+  },
+  department: {
+    type: String,
+    reqired: [true, "please provide the depatment details"],
+  },
+  // department:{
+  //     type:String,
+  //     required:[true,'staff department is required']
+  // }
+});
 
 const subjectsSchema = new mongoose.Schema({
   name: {
@@ -215,6 +249,7 @@ const studentDatabase = mongoose.model("studentdb", studentSchema);
 const staffDatabase = mongoose.model("staffdb", staffSchema);
 const resultsDatabase = mongoose.model("resultsdb", resultsSchema);
 const subjectsDatabase = mongoose.model("subjectsdb", subjectsSchema);
+const adminsDatabase=mongoose.model("admindbs",adminSchema)
 
 module.exports = {
   studentDatabase,
@@ -223,4 +258,5 @@ module.exports = {
   subjectsDatabase,
   questionsDatabase,
   passwordsDatabase,
+  adminsDatabase
 };

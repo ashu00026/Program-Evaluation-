@@ -9,6 +9,7 @@ const {
   subjectsDatabase,
   questionsDatabase,
   passwordsDatabase,
+  adminsDatabase,
 } = require("../model/schema");
 
 const jwt = require("jsonwebtoken");
@@ -112,6 +113,7 @@ const register = async (req, res) => {
               password,
               name,
               theSemester,
+              adminId,
               studentId,
               staffId,
               section,
@@ -124,7 +126,7 @@ const register = async (req, res) => {
             });
             console.log(req.body);
             console.log(username, password);
-            console.log(staffId);
+            console.log(adminId);
             console.log(section);
             if (!username || !password) {
               throw new BadRequestError("Please provide email and password");
@@ -138,17 +140,42 @@ const register = async (req, res) => {
                 const isMatch = await bcrypt.compare(password, adminPass);
                 console.log(isMatch);
 
-                if (isMatch) {
-                  // const id = new Date().getDate()
-                  console.log(`insisde the admin if block!`);
-                  // const adminToken = jwt.sign({ password,username }, process.env.JWT_SECRET, {
-                  //   expiresIn: '30d',
-                  // })
-                  // console.log(adminToken)
-                  res.status(200).json({
-                    msg: "admin created",
-                    // "adminToken":adminToken
-                  });
+                // const id = new Date().getDate()
+                try {
+                  if (isMatch) {
+                    console.log(`insisde the admin if block!`);
+                    const duplicate = await adminsDatabase.findOne({
+                      id:adminId,
+                    });
+                    console.log(duplicate)
+                    if (duplicate == null) {
+                      const theDepartmentOfAdmin =
+                        await department.toUpperCase();
+                      await adminsDatabase.create({
+                        name,
+                        email,
+                        mobileNumber,
+                        id:adminId,
+                        department: theDepartmentOfAdmin,
+                      });
+                      // console.log(adminToken)
+                      res.status(200).json({
+                        msg: "admin created",
+                        name,
+                        email,
+                        mobileNumber,
+                        adminId,
+                        department,
+                        // "adminToken":adminToken
+                      });
+                    } else {
+                      res.status(200).json({ msg: "please provide and id" });
+                    }
+                  } else {
+                    res.status(200).json({ msg: "invalid password" });
+                  }
+                } catch (e) {
+                  console.log(e);
                 }
               } else if (username == "student") {
                 console.log("inside student right direction");
@@ -421,7 +448,12 @@ const register = async (req, res) => {
   }
 };
 
+// const getAdmin= async(req,res)=>{
+
+// }
+
 const login = async (req, res) => {
+  console.log("4")
   // const requestedName=req.body.name
   const {
     username,
@@ -433,7 +465,7 @@ const login = async (req, res) => {
     semester,
     token,
     thePassword,
-    password,
+    password,department
   } = req.user;
   const passwordsRecord = await passwordsDatabase.findOne({
     _id: "63d8ff2a763e582eb05f6bd8",
@@ -446,14 +478,16 @@ const login = async (req, res) => {
   // check in the controller
   if (username == "admin") {
     console.log("inside right direction");
+    console.log(thePassword);
     console.log(password);
     // console.log(process.env.Admin_pass)
     const adminPass = passwordsRecord.adminPass;
-    const isMatch = await bcrypt.compare(password, adminPass);
+    const isMatch = await bcrypt.compare(thePassword, adminPass);
     console.log(isMatch);
-    if (password == process.env.Admin_pass) {
+    if (isMatch) {
+
       console.log(`insisde the admin if block!`);
-      res.status(200).json({});
+      res.status(200).json({username, theName, token, theId,department});
     } else {
       res.status(401).json({ msg: "wrong credentials" });
     }
@@ -948,14 +982,16 @@ const getQuestions = async (req, res) => {
     semester: semester,
     department: theDepartment,
   });
-  console.log(questions);
+  console.log("+++++++++++++++++",questions);
   if (questions.length == 0) {
     res.json({ msg: "no questions found for the subject" });
   } else {
     const questionsArray = [];
+    // console.log(questions)
     questions.forEach((record) => {
       const theQuestion = record.problemName;
-      questionsArray.push(theQuestion);
+      const theProblemStatement=record.problemStatement;
+      questionsArray.push({theQuestion,theProblemStatement});
     });
     res
       .status(200)

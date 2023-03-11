@@ -5,6 +5,7 @@ const {
   subjectsDatabase,
   studentDatabase,
   passwordsDatabase,
+  adminsDatabase,
 } = require("../model/schema");
 const { BadRequestError } = require("../errors");
 const bcrypt = require("bcryptjs");
@@ -60,9 +61,8 @@ const authenticationMiddleware = async (req, res, next) => {
                 res.json({
                   msg: "you are not authorized to access this route",
                 });
-              }
-              // }
-              const passwordsRecord = await passwordsDatabase.findOne({
+              }else{
+                const passwordsRecord = await passwordsDatabase.findOne({
                 _id: "63d8ff2a763e582eb05f6bd8",
               });
               if (username == "staff") {
@@ -151,12 +151,47 @@ const authenticationMiddleware = async (req, res, next) => {
                   res.json({ msg: "wrong Password" });
                 }
               } else if (username == "admin") {
-                if (password == thePassword) {
-                  next();
-                } else {
-                  res.json({ msg: "wrong password" });
+                console.log("adminnnnnnnnnnnnnnnnnnnn")
+                const password = await passwordsRecord.adminPass;
+                const isMatch = await bcrypt.compare(thePassword, password);
+                console.log(isMatch)
+
+
+                if(isMatch){
+                  const theAdmin = await adminsDatabase.findOne({ email });
+                  console.log("1")
+                  if (theAdmin == null) {
+                    console.log("+");
+                    res.json({ msg: "wrong credentials ++++" });
+                  }else {
+                    const theId=theAdmin.id;
+                    const theName=theAdmin.name;
+                    const theDepartment=theAdmin.department
+                    console.log("2")
+                    // const username
+                    
+
+                    req.user = {
+                      theId,
+                      theName,
+                      token,
+                      department:theDepartment,
+                      username,
+                      thePassword,
+                      password,
+                    };
+                    console.log(req.user)
+                    console.log("3")
+                    next();
+                  }
+                }else{
+                  res.json({msg:"Wrong Password"})
                 }
               }
+              }
+              // }
+              
+              
             }
           }
         );
