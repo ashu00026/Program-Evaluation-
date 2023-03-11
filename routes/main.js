@@ -13,8 +13,9 @@ const {
   getQuestion,
   addpasswords,
   submitResult,
-  deleteQuestion
-  // deleteSubject
+  deleteQuestion,
+  // deleteSubject,
+  getAdmin
 } = require("../controllers/main");
 
 router.route("/f/deleteQuestion").post(deleteQuestion)
@@ -22,6 +23,7 @@ router.route("/assistant/register").post(register);
 router.route("/login").post(login);
 router.route("/assistant/register/f/addSubjects").post(addSubject);
 router.route("/login/getStudent").get(getStudent);
+router.route("/login/getAdmin").get(getAdmin);
 router.route("/login/getStaff").get(getFaculty);
 router.route("/login/getAllResults").get(getAllResults);
 router.route("/login/getResult").get(getResult);

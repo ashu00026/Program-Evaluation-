@@ -145,9 +145,9 @@ const register = async (req, res) => {
                   if (isMatch) {
                     console.log(`insisde the admin if block!`);
                     const duplicate = await adminsDatabase.findOne({
-                      id:adminId,
+                      id: adminId,
                     });
-                    console.log(duplicate)
+                    console.log(duplicate);
                     if (duplicate == null) {
                       const theDepartmentOfAdmin =
                         await department.toUpperCase();
@@ -155,7 +155,7 @@ const register = async (req, res) => {
                         name,
                         email,
                         mobileNumber,
-                        id:adminId,
+                        id: adminId,
                         department: theDepartmentOfAdmin,
                       });
                       // console.log(adminToken)
@@ -449,11 +449,96 @@ const register = async (req, res) => {
 };
 
 // const getAdmin= async(req,res)=>{
+const getAdmin = async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    console.log("+++++++");
+    console.log(!authHeader);
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      res.status(401).json({ msg: "unauthenticated user" });
+    } else {
+      const token = authHeader.split(" ")[1];
+      const decoded = jwt.verify(
+        token,
+        process.env.JWT_SECRET,
+        async function (err, decoded) {
+          console.log("22222");
+          if (err) {
+            console.log(err);
+            req.authenticated = false;
+            req.decoded = null;
+          } else {
+            const { username } = decoded;
+            if (username == "admin") {
+              //roles
+              //code goes here
+              console.log("inside get admin");
+              const id=req.query.id;
+              console.log(id)
+              const admin=await adminsDatabase.findOne({id})
+              console.log(admin)
+              if(admin==null){
+                res.status(200).json({msg:"no User found with this id"})
+              }else{
+                const department=admin.department
+              const name=admin.name;
+              const email=admin.email
+              const mobileNumber=admin.mobileNumber
+
+              const theRecords = await subjectsDatabase.find({
+                department,
+              });
+              if(theRecords==null){
+                res.status(200).json({msg:"no record found for the department"})
+              }else{
+                let theDetailsOfSubjects = [];
+              let theStaff=new Set([]);
+              theRecords.forEach((record) => {
+                // let theSubjects = [];
+                let subjects = record.details.subjects[0];
+                // subjects.forEach((subject) => {
+                // });
+                // const theSubjects=subject;
+                const semester=record.details.semester
+                const section=record.details.section
+                const staffName = record.name;
+                const department=record.department
+                theStaff.add(staffName);
+                // theSubjects=theSubjects[0]
+                theDetailsOfSubjects.push({ subjects, staffName,semester,section });
+              });
+              console.log(theDetailsOfSubjects);
+              let subjects = [];
+              theDetailsOfSubjects.forEach((detail) => {
+                // const array = detail.theSubjects;
+                subjects.push(detail.subjects);
+              });
+              console.log(subjects);
+              theStaff=[...theStaff]
+              console.log(theStaff);
+              res.status(200).json({subjects,theStaff,theDetailsOfSubjects})
+              }
+              
+              }
+              // res.json("done")
+
+            }else{
+              res.status(401).json({msg:"not authorized for this route"})
+            }
+          }
+        }
+      );
+    }
+  } catch (e) {
+    console.log(e);
+    res.status(200).json({msg:e})
+  }
+};
 
 // }
 
 const login = async (req, res) => {
-  console.log("4")
+  console.log("4");
   // const requestedName=req.body.name
   const {
     username,
@@ -465,7 +550,8 @@ const login = async (req, res) => {
     semester,
     token,
     thePassword,
-    password,department
+    password,
+    department,
   } = req.user;
   const passwordsRecord = await passwordsDatabase.findOne({
     _id: "63d8ff2a763e582eb05f6bd8",
@@ -485,9 +571,8 @@ const login = async (req, res) => {
     const isMatch = await bcrypt.compare(thePassword, adminPass);
     console.log(isMatch);
     if (isMatch) {
-
       console.log(`insisde the admin if block!`);
-      res.status(200).json({username, theName, token, theId,department});
+      res.status(200).json({ username, theName, token, theId, department });
     } else {
       res.status(401).json({ msg: "wrong credentials" });
     }
@@ -736,11 +821,47 @@ const addSubject = async (req, res) => {
 };
 
 const getStudent = async (req, res) => {
-  const studentID = req.query.studentId;
-  console.log(studentID);
-  const theStudent = await studentDatabase.find({ studentId: studentID });
-  console.log(theStudent);
-  res.status(200).json({ theStudent });
+  try {
+    const studentID = req.query.studentId;
+    console.log(studentID);
+    const theStudent = await studentDatabase.findOne({ studentId: studentID });
+    console.log(theStudent);
+    console.log(theStudent.semester);
+
+    const semester = theStudent.semester;
+    const department = theStudent.department;
+    const section = theStudent.section;
+    console.log(semester, department, section);
+
+    const theRecords = await subjectsDatabase.find({
+      "details.semester": semester,
+      "details.section": section,
+      department,
+    });
+    let theDetailsOfSubjects = [];
+    theRecords.forEach((record) => {
+      let theSubjects = [];
+      let subjects = record.details.subjects;
+      subjects.forEach((subject) => {
+        theSubjects.push(subject);
+      });
+      const staffName = record.name;
+      theDetailsOfSubjects.push({ theSubjects, staffName });
+    });
+    console.log(theDetailsOfSubjects);
+    let subjects = [];
+    theDetailsOfSubjects.forEach((detail) => {
+      const array = detail.theSubjects;
+      subjects.push(...array);
+    });
+    console.log(subjects);
+    // console.log(theRecords[0].details.subjects);
+    // console.log(theSubjects)
+
+    res.status(200).json({ theStudent, theDetailsOfSubjects, subjects });
+  } catch (e) {
+    console.log(e);
+  }
 };
 
 const getFaculty = async (req, res) => {
@@ -949,30 +1070,42 @@ const addProblem = async (req, res) => {
               sampleInput,
               sampleOutput,
             });
-            const theResultRecords=await resultsDatabase.find({semester:semester,department:theDepartment,subjectName:subject})
-            console.log(theResultRecords,"++++++++++")
-            theResultRecords.forEach(async (record)=>{
-              theArray=record.results;
-              console.log(subject,semester,theDepartment)
-              const theSubject=subject.toUpperCase()
-              const noOfExpQuestions=await questionsDatabase.find({subject:theSubject,semester,department:theDepartment})
-              console.log("----------------",noOfExpQuestions)
-              const totalnoOfExpQuestions=noOfExpQuestions.length
-              console.log(totalnoOfExpQuestions)
-              theArray[15]=(theArray[15]*((totalnoOfExpQuestions-1)/totalnoOfExpQuestions))
-              const theID=record["_id"]
-              let grandTotal=0;
-              console.log("3")
-              for(let j=15;j<theArray.length-1;j++){
-                console.log(theArray[j])
-                grandTotal=grandTotal+Number(theArray[j])
+            const theResultRecords = await resultsDatabase.find({
+              semester: semester,
+              department: theDepartment,
+              subjectName: subject,
+            });
+            console.log(theResultRecords, "++++++++++");
+            theResultRecords.forEach(async (record) => {
+              theArray = record.results;
+              console.log(subject, semester, theDepartment);
+              const theSubject = subject.toUpperCase();
+              const noOfExpQuestions = await questionsDatabase.find({
+                subject: theSubject,
+                semester,
+                department: theDepartment,
+              });
+              console.log("----------------", noOfExpQuestions);
+              const totalnoOfExpQuestions = noOfExpQuestions.length;
+              console.log(totalnoOfExpQuestions);
+              theArray[15] =
+                theArray[15] *
+                ((totalnoOfExpQuestions - 1) / totalnoOfExpQuestions);
+              const theID = record["_id"];
+              let grandTotal = 0;
+              console.log("3");
+              for (let j = 15; j < theArray.length - 1; j++) {
+                console.log(theArray[j]);
+                grandTotal = grandTotal + Number(theArray[j]);
               }
-              console.log(grandTotal,"grand total")
-              theArray[18]=Math.ceil(grandTotal);
-              console.log(theID)
-              await resultsDatabase.updateOne({_id:theID},{results:theArray})
-            }
-            )
+              console.log(grandTotal, "grand total");
+              theArray[18] = Math.ceil(grandTotal);
+              console.log(theID);
+              await resultsDatabase.updateOne(
+                { _id: theID },
+                { results: theArray }
+              );
+            });
             res.status(200).json({ msg: "problem added to subject!" });
 
             //code goes here
@@ -1009,7 +1142,7 @@ const getQuestions = async (req, res) => {
     semester: semester,
     department: theDepartment,
   });
-  console.log("+++++++++++++++++",questions);
+  console.log("+++++++++++++++++", questions);
   if (questions.length == 0) {
     res.json({ msg: "no questions found for the subject" });
   } else {
@@ -1017,14 +1150,13 @@ const getQuestions = async (req, res) => {
     // console.log(questions)
     questions.forEach((record) => {
       const theQuestion = record.problemName;
-      const theProblemStatement=record.problemStatement;
-      const theID=record["_id"]
-      questionsArray.push({theQuestion,theProblemStatement,theID});
-
+      const theProblemStatement = record.problemStatement;
+      const theID = record["_id"];
+      questionsArray.push({ theQuestion, theProblemStatement, theID });
     });
     res
       .status(200)
-      .json({ msg: "The subject Problems", problems: questionsArray, });
+      .json({ msg: "The subject Problems", problems: questionsArray });
   }
 };
 // const facultyDashBoard=async(req,res)=>{
@@ -1078,32 +1210,36 @@ const submitResult = async (req, res) => {
       studentid,
       subjectName,
     });
-    const subject=subjectName.toUpperCase()
-    const theDepartment=department.toUpperCase()
-    const noOfExpQuestions=await questionsDatabase.find({subject,semester,department:theDepartment})
-    console.log(noOfExpQuestions.length,"number of questions")
+    const subject = subjectName.toUpperCase();
+    const theDepartment = department.toUpperCase();
+    const noOfExpQuestions = await questionsDatabase.find({
+      subject,
+      semester,
+      department: theDepartment,
+    });
+    console.log(noOfExpQuestions.length, "number of questions");
     const theArray = theResultRecord.results;
     theArray[questionNumber - 1] = await marks;
-    let total=0;
-    console.log("right")
-    for(let i=0;i<15;i++){
-      total=total+Number(theArray[i])
+    let total = 0;
+    console.log("right");
+    for (let i = 0; i < 15; i++) {
+      total = total + Number(theArray[i]);
     }
-    console.log(total)
-    console.log("2")
-    const average=Number(total/noOfExpQuestions.length);
-    console.log(average)
-    theArray[15]=Number(average);
-    let grandTotal=0;
-    console.log("3")
-    for(let j=15;j<theArray.length-1;j++){
-      console.log(theArray[j])
-      grandTotal=grandTotal+Number(theArray[j])
+    console.log(total);
+    console.log("2");
+    const average = Number(total / noOfExpQuestions.length);
+    console.log(average);
+    theArray[15] = Number(average);
+    let grandTotal = 0;
+    console.log("3");
+    for (let j = 15; j < theArray.length - 1; j++) {
+      console.log(theArray[j]);
+      grandTotal = grandTotal + Number(theArray[j]);
     }
-    console.log(grandTotal,"grand total")
-    theArray[18]=Math.ceil(grandTotal);
+    console.log(grandTotal, "grand total");
+    theArray[18] = Math.ceil(grandTotal);
     // theArray[19]=average;
-    console.log("5")
+    console.log("5");
     await resultsDatabase.findOneAndUpdate(
       { studentid, subjectName },
       { results: theArray }
@@ -1131,5 +1267,5 @@ module.exports = {
   addpasswords,
   submitResult,
   // deleteSubject
-  deleteQuestion,
+  deleteQuestion,getAdmin
 };
