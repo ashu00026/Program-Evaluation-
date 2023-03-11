@@ -949,6 +949,30 @@ const addProblem = async (req, res) => {
               sampleInput,
               sampleOutput,
             });
+            const theResultRecords=await resultsDatabase.find({semester:semester,department:theDepartment,subjectName:subject})
+            console.log(theResultRecords,"++++++++++")
+            theResultRecords.forEach(async (record)=>{
+              theArray=record.results;
+              console.log(subject,semester,theDepartment)
+              const theSubject=subject.toUpperCase()
+              const noOfExpQuestions=await questionsDatabase.find({subject:theSubject,semester,department:theDepartment})
+              console.log("----------------",noOfExpQuestions)
+              const totalnoOfExpQuestions=noOfExpQuestions.length
+              console.log(totalnoOfExpQuestions)
+              theArray[15]=(theArray[15]*((totalnoOfExpQuestions-1)/totalnoOfExpQuestions))
+              const theID=record["_id"]
+              let grandTotal=0;
+              console.log("3")
+              for(let j=15;j<theArray.length-1;j++){
+                console.log(theArray[j])
+                grandTotal=grandTotal+Number(theArray[j])
+              }
+              console.log(grandTotal,"grand total")
+              theArray[18]=Math.ceil(grandTotal);
+              console.log(theID)
+              await resultsDatabase.updateOne({_id:theID},{results:theArray})
+            }
+            )
             res.status(200).json({ msg: "problem added to subject!" });
 
             //code goes here
@@ -1054,10 +1078,32 @@ const submitResult = async (req, res) => {
       studentid,
       subjectName,
     });
-    const noOfExpQuestions=await questionsDatabase.find({subject:subjectName,semester,department})
-    console.log(noOfExpQuestions)
+    const subject=subjectName.toUpperCase()
+    const theDepartment=department.toUpperCase()
+    const noOfExpQuestions=await questionsDatabase.find({subject,semester,department:theDepartment})
+    console.log(noOfExpQuestions.length,"number of questions")
     const theArray = theResultRecord.results;
     theArray[questionNumber - 1] = await marks;
+    let total=0;
+    console.log("right")
+    for(let i=0;i<15;i++){
+      total=total+Number(theArray[i])
+    }
+    console.log(total)
+    console.log("2")
+    const average=Number(total/noOfExpQuestions.length);
+    console.log(average)
+    theArray[15]=Number(average);
+    let grandTotal=0;
+    console.log("3")
+    for(let j=15;j<theArray.length-1;j++){
+      console.log(theArray[j])
+      grandTotal=grandTotal+Number(theArray[j])
+    }
+    console.log(grandTotal,"grand total")
+    theArray[18]=Math.ceil(grandTotal);
+    // theArray[19]=average;
+    console.log("5")
     await resultsDatabase.findOneAndUpdate(
       { studentid, subjectName },
       { results: theArray }
