@@ -64,9 +64,12 @@ const deleteQuestion = async (req, res) => {
                 if (done == null) res.json({ msg: "no question found " });
                 else {
                   console.log("_----------------_")
-                  const subject = done.subject.toUpperCase();
+                  const subject = done.subject;
                   const semester = done.semester;
                   const department = done.department.toUpperCase();
+                  console.log("department",department)
+                  console.log("subject",subject)
+                  console.log("semester",semester)
                   const questionNumber = done.questionNumber;
                   const records = await resultsDatabase.find({
                     semester,
@@ -78,16 +81,36 @@ const deleteQuestion = async (req, res) => {
                     semester,
                     department: department,
                   });
-                  console.log("----------------", noOfExpQuestions);
+                  // console.log("----------------", noOfExpQuestions);
                   const totalnoOfExpQuestions = noOfExpQuestions.length;
-                  console.log(totalnoOfExpQuestions);
-                  records.forEach((record) => {
+                  console.log(totalnoOfExpQuestions,"no of questions");
+                  console.log(records,"the RECORDS")
+                  records.forEach(async (record) => {
                     const theArray = record.results;
+                    console.log(questionNumber);
                     theArray[questionNumber - 1] = 0;
-                    theArray[15] =
-                      (theArray[15] *
-                      (totalnoOfExpQuestions  / (totalnoOfExpQuestions + 1)));
-                      console.log(theArray)
+                    // theArray[15] =
+                    //   (theArray[15] *
+                    //   ((totalnoOfExpQuestions+1)  / (totalnoOfExpQuestions )));
+                    //   if(theArray[15]>15){
+                    //     theArray[15]=15;
+                    //   }
+                    let total=0;
+                    for(let i=0;i<15;i++){
+                      total=total+theArray[i] 
+                    }
+                    let ave;
+                    if(totalnoOfExpQuestions==0){
+                      ave=0;
+                      console.log("if")
+                    }else{
+                      console.log("elsee")
+                      console.log(total,totalnoOfExpQuestions);
+
+                      ave=total/totalnoOfExpQuestions;
+                    }
+                    theArray[15]=ave;
+                      console.log(theArray,"check average now at 15")
                       let grandTotal = 0;
                       console.log("3");
                       for (let j = 15; j < theArray.length - 1; j++) {
@@ -96,9 +119,13 @@ const deleteQuestion = async (req, res) => {
                       }
                       console.log(grandTotal, "grand total");
                       theArray[18] = Math.ceil(grandTotal);
+                      console.log(ave,theArray,"check average and array to patch")
                       //find result and update----------------------------
-                      
-
+                      const theID = record["_id"];
+                      await resultsDatabase.updateOne(
+                        { _id: theID },
+                        { results: theArray }
+                      );
                   });
                   res.json({ msg: "deleted successfully", object: done });
                 }
@@ -239,7 +266,7 @@ const register = async (req, res) => {
                   try {
                     if (duplicate == null) {
                       console.log("insside the duplicates");
-                      const arr = new Array(10).fill(0);
+                      const arr = new Array(19).fill(0);
                       // const arr[]={0}
                       const theDepartmentOfStudent =
                         await department.toUpperCase();
@@ -262,13 +289,14 @@ const register = async (req, res) => {
                       subjectRecords.forEach((subjectRecord) => {
                         const subjectsArr = subjectRecord.details.subjects;
                         subjectsArr.forEach((subjectName) => {
+                          const subject=subjectName.toUpperCase()
                           resultsDatabase.create({
                             studentid: studentId,
                             studentName: name,
                             semester: theSemester,
                             section: section,
                             department: theDepartmentOfStudent,
-                            subjectName: subjectName,
+                            subjectName: subject,
                             results: arr,
                           });
                         });
@@ -979,9 +1007,9 @@ const getAllResults = async (req, res) => {
           const { username } = decoded;
           if (username == "staff" || username == "admin") {
             console.log("getAllResults");
-            const theSubject = req.query.subject;
+            const theSubject = req.query.subject.toUpperCase();
             const theSemester = req.query.semester;
-            const theDepartment = req.query.department;
+            const theDepartment = req.query.department.toUpperCase();
             const section = req.query.section;
             const results = await resultsDatabase.find({
               subjectName: theSubject,
@@ -1250,9 +1278,12 @@ const submitResult = async (req, res) => {
     marks,
   } = req.body;
   try {
+    console.log(subjectName)
+    console.log(studentid)
+    const theSubject=subjectName.toUpperCase()
     const theResultRecord = await resultsDatabase.findOne({
       studentid,
-      subjectName,
+      subjectName:theSubject,
     });
     const subject = subjectName.toUpperCase();
     const theDepartment = department.toUpperCase();
@@ -1285,7 +1316,7 @@ const submitResult = async (req, res) => {
     // theArray[19]=average;
     console.log("5");
     await resultsDatabase.findOneAndUpdate(
-      { studentid, subjectName },
+      { studentid, subjectName:subject },
       { results: theArray }
     );
     console.log(theArray);
