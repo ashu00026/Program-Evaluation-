@@ -57,12 +57,49 @@ const deleteQuestion = async (req, res) => {
         if (username == "staff") {
           const deleteReq = await questionsDatabase.findByIdAndDelete(
             id,
-            (err, done) => {
+            async (err, done) => {
               if (err) {
                 res.json({ msg: "nnot possible" });
               } else {
                 if (done == null) res.json({ msg: "no question found " });
                 else {
+                  console.log("_----------------_")
+                  const subject = done.subject.toUpperCase();
+                  const semester = done.semester;
+                  const department = done.department.toUpperCase();
+                  const questionNumber = done.questionNumber;
+                  const records = await resultsDatabase.find({
+                    semester,
+                    subjectName: subject,
+                    department,
+                  });
+                  const noOfExpQuestions = await questionsDatabase.find({
+                    subject: subject,
+                    semester,
+                    department: department,
+                  });
+                  console.log("----------------", noOfExpQuestions);
+                  const totalnoOfExpQuestions = noOfExpQuestions.length;
+                  console.log(totalnoOfExpQuestions);
+                  records.forEach((record) => {
+                    const theArray = record.results;
+                    theArray[questionNumber - 1] = 0;
+                    theArray[15] =
+                      (theArray[15] *
+                      (totalnoOfExpQuestions  / (totalnoOfExpQuestions + 1)));
+                      console.log(theArray)
+                      let grandTotal = 0;
+                      console.log("3");
+                      for (let j = 15; j < theArray.length - 1; j++) {
+                        console.log(theArray[j]);
+                        grandTotal = grandTotal + Number(theArray[j]);
+                      }
+                      console.log(grandTotal, "grand total");
+                      theArray[18] = Math.ceil(grandTotal);
+                      //find result and update----------------------------
+                      
+
+                  });
                   res.json({ msg: "deleted successfully", object: done });
                 }
               }
@@ -473,57 +510,64 @@ const getAdmin = async (req, res) => {
               //roles
               //code goes here
               console.log("inside get admin");
-              const id=req.query.id;
-              console.log(id)
-              const admin=await adminsDatabase.findOne({id})
-              console.log(admin)
-              if(admin==null){
-                res.status(200).json({msg:"no User found with this id"})
-              }else{
-                const department=admin.department
-              const name=admin.name;
-              const email=admin.email
-              const mobileNumber=admin.mobileNumber
+              const id = req.query.id;
+              console.log(id);
+              const admin = await adminsDatabase.findOne({ id });
+              console.log(admin);
+              if (admin == null) {
+                res.status(200).json({ msg: "no User found with this id" });
+              } else {
+                const department = admin.department;
+                const name = admin.name;
+                const email = admin.email;
+                const mobileNumber = admin.mobileNumber;
 
-              const theRecords = await subjectsDatabase.find({
-                department,
-              });
-              if(theRecords==null){
-                res.status(200).json({msg:"no record found for the department"})
-              }else{
-                let theDetailsOfSubjects = [];
-              let theStaff=new Set([]);
-              theRecords.forEach((record) => {
-                // let theSubjects = [];
-                let subjects = record.details.subjects[0];
-                // subjects.forEach((subject) => {
-                // });
-                // const theSubjects=subject;
-                const semester=record.details.semester
-                const section=record.details.section
-                const staffName = record.name;
-                const department=record.department
-                theStaff.add(staffName);
-                // theSubjects=theSubjects[0]
-                theDetailsOfSubjects.push({ subjects, staffName,semester,section });
-              });
-              console.log(theDetailsOfSubjects);
-              let subjects = [];
-              theDetailsOfSubjects.forEach((detail) => {
-                // const array = detail.theSubjects;
-                subjects.push(detail.subjects);
-              });
-              console.log(subjects);
-              theStaff=[...theStaff]
-              console.log(theStaff);
-              res.status(200).json({subjects,theStaff,theDetailsOfSubjects})
-              }
-              
+                const theRecords = await subjectsDatabase.find({
+                  department,
+                });
+                if (theRecords == null) {
+                  res
+                    .status(200)
+                    .json({ msg: "no record found for the department" });
+                } else {
+                  let theDetailsOfSubjects = [];
+                  let theStaff = new Set([]);
+                  theRecords.forEach((record) => {
+                    // let theSubjects = [];
+                    let subjects = record.details.subjects[0];
+                    // subjects.forEach((subject) => {
+                    // });
+                    // const theSubjects=subject;
+                    const semester = record.details.semester;
+                    const section = record.details.section;
+                    const staffName = record.name;
+                    const department = record.department;
+                    theStaff.add(staffName);
+                    // theSubjects=theSubjects[0]
+                    theDetailsOfSubjects.push({
+                      subjects,
+                      staffName,
+                      semester,
+                      section,
+                    });
+                  });
+                  console.log(theDetailsOfSubjects);
+                  let subjects = [];
+                  theDetailsOfSubjects.forEach((detail) => {
+                    // const array = detail.theSubjects;
+                    subjects.push(detail.subjects);
+                  });
+                  console.log(subjects);
+                  theStaff = [...theStaff];
+                  console.log(theStaff);
+                  res
+                    .status(200)
+                    .json({ subjects, theStaff, theDetailsOfSubjects });
+                }
               }
               // res.json("done")
-
-            }else{
-              res.status(401).json({msg:"not authorized for this route"})
+            } else {
+              res.status(401).json({ msg: "not authorized for this route" });
             }
           }
         }
@@ -531,7 +575,7 @@ const getAdmin = async (req, res) => {
     }
   } catch (e) {
     console.log(e);
-    res.status(200).json({msg:e})
+    res.status(200).json({ msg: e });
   }
 };
 
@@ -1267,5 +1311,6 @@ module.exports = {
   addpasswords,
   submitResult,
   // deleteSubject
-  deleteQuestion,getAdmin
+  deleteQuestion,
+  getAdmin,
 };
