@@ -549,7 +549,7 @@ const getAdmin = async (req, res) => {
               if (admin == null) {
                 res.status(200).json({ msg: "no User found with this id" });
               } else {
-                const department = admin.department;
+                const department = admin.department.toUpperCase();
                 const name = admin.name;
                 const email = admin.email;
                 const mobileNumber = admin.mobileNumber;
@@ -574,7 +574,7 @@ const getAdmin = async (req, res) => {
                     const section = record.details.section;
                     const staffName = record.name;
                     const department = record.department;
-                    theStaff.add(staffName);
+                    // theStaff.add(staffName);
                     // theSubjects=theSubjects[0]
                     theDetailsOfSubjects.push({
                       subjects,
@@ -583,6 +583,11 @@ const getAdmin = async (req, res) => {
                       section,
                     });
                   });
+                  const completeStaff=await staffDatabase.find({department})
+                  completeStaff.forEach((staff)=>{
+                    theStaff.add(staff.name);
+                  })
+
                   console.log(theDetailsOfSubjects);
                   let subjects = [];
                   theDetailsOfSubjects.forEach((detail) => {
@@ -1074,7 +1079,7 @@ const getAllResults = async (req, res) => {
 const getResult = async (req, res) => {
   console.log("getResult");
   const ID = req.query.studentId;
-  const theSubject = req.query.subject;
+  const theSubject = req.query.subject.toUpperCase();
   console.log(ID, theSubject);
   const studentRecord = await studentDatabase.findOne({ studentId: ID });
   const theStudentName = studentRecord.name;
