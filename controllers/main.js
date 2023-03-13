@@ -583,10 +583,12 @@ const getAdmin = async (req, res) => {
                       section,
                     });
                   });
-                  const completeStaff=await staffDatabase.find({department})
-                  completeStaff.forEach((staff)=>{
+                  const completeStaff = await staffDatabase.find({
+                    department,
+                  });
+                  completeStaff.forEach((staff) => {
                     theStaff.add(staff.name);
-                  })
+                  });
 
                   console.log(theDetailsOfSubjects);
                   let subjects = [];
@@ -1100,6 +1102,75 @@ const getResult = async (req, res) => {
   });
 };
 
+const setaugumentedResult = async (req, res) => {
+  const authHeader = req.headers.authorization;
+  const token = authHeader.split(" ")[1];
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    throw new UnauthenticatedError("No token provided");
+  } else {
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET,
+      async function (err, decoded) {
+        console.log("22222");
+        if (err) {
+          console.log(err);
+          req.authenticated = false;
+          req.decoded = null;
+        } else {
+          const { username } = decoded;
+          if (username == "staff" || username == "admin") {
+            //roles
+
+            try {
+              const { studentId, subjectName,marks } = req.body;
+              const theSubject = subjectName.toUpperCase();
+              console.log(theSubject,studentId)
+              const theRecord = await resultsDatabase.findOne({
+                studentid: studentId,
+                subjectName: theSubject,
+              });
+              console.log(theRecord);
+              if(marks>5){
+                res.json({msg:"not possible to give marks more than 5"})
+
+              }else{
+
+                if(theRecord==null){
+                  res.status(404).json({msg:"student not found!!"})
+                }else{
+                  const updatingId=theRecord["_id"];
+                  const theArray=theRecord.results;
+                  theArray[16]=marks;
+                  theArray[18]=theArray[17]+theArray[16]+theArray[15];
+                  await resultsDatabase.findByIdAndUpdate(updatingId,{results:theArray},(err,result)=>{
+                    if(err){
+                      res.json({msg:"some error"})
+                    }else{
+                      console.log(result)
+                      res.json({msg:"done"})
+                    }
+                  })
+  
+                }
+              }
+              // theArray[]
+            } catch (e) {
+              console.log(e);
+            }
+
+            //code goes here
+          } else {
+            res
+              .status(401)
+              .json({ msg: "you are not authorized for this route" });
+          }
+        }
+      }
+    );
+  }
+};
+
 const addProblem = async (req, res) => {
   console.log("+++++");
 
@@ -1351,6 +1422,7 @@ module.exports = {
   addpasswords,
   submitResult,
   // deleteSubject
+  setaugumentedResult,
   deleteQuestion,
   getAdmin,
 };

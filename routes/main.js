@@ -14,10 +14,12 @@ const {
   addpasswords,
   submitResult,
   deleteQuestion,
+  setaugumentedResult,
   // deleteSubject,
   getAdmin
 } = require("../controllers/main");
 
+router.route("/setAugumentedMarks").post(setaugumentedResult);
 router.route("/f/deleteQuestion").post(deleteQuestion)
 router.route("/assistant/register").post(register);
 router.route("/login").post(login);
