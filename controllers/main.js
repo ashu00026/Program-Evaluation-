@@ -1365,38 +1365,56 @@ const submitResult = async (req, res) => {
       studentid,
       subjectName: theSubject,
     });
-    const subject = subjectName.toUpperCase();
-    const theDepartment = department.toUpperCase();
-    const noOfExpQuestions = await questionsDatabase.find({
-      subject,
-      semester,
-      department: theDepartment,
-    });
-    console.log(noOfExpQuestions.length, "number of questions");
-    const theArray = theResultRecord.results;
-    theArray[questionNumber - 1] = await marks;
-    let total = 0;
-    console.log("right");
-    for (let i = 0; i < 15; i++) {
-      total = total + Number(theArray[i]);
-    }
-    console.log(total);
-    console.log("2");
-    const average = Number(total / noOfExpQuestions.length);
-    console.log(average);
-    theArray[15] = Number(average);
     let grandTotal = 0;
-    console.log("3");
-    for (let j = 15; j < theArray.length - 1; j++) {
-      console.log(theArray[j]);
-      grandTotal = grandTotal + Number(theArray[j]);
+    const theArray = theResultRecord.results;
+    if(questionNumber===16){
+      if(marks>5){res.json({msg:"marks cannot be greater than 5"})
+    }else{
+      theArray[17]=marks;
+      console.log("3");
+      for (let j = 15; j < theArray.length - 1; j++) {
+        console.log(theArray[j]);
+        grandTotal = grandTotal + Number(theArray[j]);
+      }
+      console.log(grandTotal, "grand total");
+      theArray[18] = Math.ceil(grandTotal);
     }
-    console.log(grandTotal, "grand total");
-    theArray[18] = Math.ceil(grandTotal);
-    // theArray[19]=average;
-    console.log("5");
+    
+    }else{
+
+      const subject = subjectName.toUpperCase();
+      const theDepartment = department.toUpperCase();
+      const noOfExpQuestions = await questionsDatabase.find({
+        subject,
+        semester,
+        department: theDepartment,
+      });
+      console.log(noOfExpQuestions.length, "number of questions");
+      // const theArray = theResultRecord.results;
+      theArray[questionNumber - 1] = await marks;
+      let total = 0;
+      console.log("right");
+      for (let i = 0; i < 15; i++) {
+        total = total + Number(theArray[i]);
+      }
+      console.log(total);
+      console.log("2");
+      const average = Number(total / noOfExpQuestions.length);
+      console.log(average);
+      theArray[15] = Number(average);
+      let grandTotal = 0;
+      console.log("3");
+      for (let j = 15; j < theArray.length - 1; j++) {
+        console.log(theArray[j]);
+        grandTotal = grandTotal + Number(theArray[j]);
+      }
+      console.log(grandTotal, "grand total");
+      theArray[18] = Math.ceil(grandTotal);
+      // theArray[19]=average;
+      console.log("5");
+    }
     await resultsDatabase.findOneAndUpdate(
-      { studentid, subjectName: subject },
+      { studentid, subjectName: theSubject },
       { results: theArray }
     );
     console.log(theArray);
