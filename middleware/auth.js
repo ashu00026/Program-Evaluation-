@@ -57,11 +57,12 @@ const authenticationMiddleware = async (req, res, next) => {
               // const password='student'
               console.log(theUser, username, "+++++++++++");
               // if(username){
-              if (username != theUser) {
-                res.json({
+              if (username !== theUser) {
+                res.status(401).json({
                   msg: "you are not authorized to access this route",
                 });
               }else{
+                console.log("*****")
                 const passwordsRecord = await passwordsDatabase.findOne({
                 _id: "63d8ff2a763e582eb05f6bd8",
               });
@@ -76,7 +77,7 @@ const authenticationMiddleware = async (req, res, next) => {
                   const theStaff = await staffDatabase.findOne({ email });
                   if (theStaff == null) {
                     console.log("+");
-                    res.json({ msg: "wrong credentials ++++" });
+                    res.status(401).json({ msg: "wrong credentials ++++" });
                   } else {
                     const staffSubjects = [];
                     const theId = theStaff.id;
@@ -103,7 +104,7 @@ const authenticationMiddleware = async (req, res, next) => {
                     next();
                   }
                 } else {
-                  res.json({ msg: "Wrong Password" });
+                  res.status(401).json({ msg: "Wrong Password" });
                 }
               } else if (username == "student") {
                 const password = await passwordsRecord.studentPass;
@@ -116,7 +117,7 @@ const authenticationMiddleware = async (req, res, next) => {
 
                   if (theStudent == null) {
                     console.log("-");
-                    res.json({ msg: "wrong credentials" });
+                    res.status(401).json({ msg: "wrong credentials" });
                   } else {
                     const theId = theStudent.studentId;
                     const theName = theStudent.name;
@@ -148,7 +149,7 @@ const authenticationMiddleware = async (req, res, next) => {
                     next();
                   }
                 } else {
-                  res.json({ msg: "wrong Password" });
+                  res.status(401).json({ msg: "wrong Password" });
                 }
               } else if (username == "admin") {
                 console.log("adminnnnnnnnnnnnnnnnnnnn")
@@ -162,7 +163,7 @@ const authenticationMiddleware = async (req, res, next) => {
                   console.log("1")
                   if (theAdmin == null) {
                     console.log("+");
-                    res.json({ msg: "wrong credentials ++++" });
+                    res.status(401).json({ msg: "wrong credentials ++++" });
                   }else {
                     const theId=theAdmin.id;
                     const theName=theAdmin.name;
@@ -185,7 +186,7 @@ const authenticationMiddleware = async (req, res, next) => {
                     next();
                   }
                 }else{
-                  res.json({msg:"Wrong Password"})
+                  res.status(401).json({msg:"Wrong Password"})
                 }
               }
               }

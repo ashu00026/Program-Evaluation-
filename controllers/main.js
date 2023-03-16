@@ -974,9 +974,9 @@ const getFaculty = async (req, res) => {
             const subjects = await subjectsDatabase.find({ name: staffName });
             console.log(theStaff);
             console.log(subjects);
-            console.log(subjects[0].details);
-            console.log(subjects[1].details);
-            console.log(subjects[2].details);
+            // console.log(subjects[0].details);
+            // console.log(subjects[1].details);
+            // console.log(subjects[2].details);
             res.status(200).json({ staff: theStaff, subjects: subjects });
           } else {
             res
