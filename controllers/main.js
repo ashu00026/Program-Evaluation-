@@ -947,6 +947,52 @@ const getStudent = async (req, res) => {
   }
 };
 
+const getAllDepartments = async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader.split(" ")[1];
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      throw new UnauthenticatedError("No token provided");
+    } else {
+      const decoded = jwt.verify(
+        token,
+        process.env.JWT_SECRET,
+        async function (err, decoded) {
+          console.log("22222");
+          if (err) {
+            console.log(err);
+            req.authenticated = false;
+            req.decoded = null;
+          } else {
+            const { username } = decoded;
+            if (username == "admin") {
+              // const adminId=req.query.id;
+              // console.log("admin id",adminId)
+              const departments=await adminsDatabase.find({})
+              let Alldepartments=new Set([])
+              departments.forEach((record)=>{
+                console.log(record.department)
+                const department=record.department
+                Alldepartments.add(department)
+              })
+              Alldepartments=[...Alldepartments]
+              res.status(200).json({departments:Alldepartments})
+              //roles
+              //code goes here
+            } else {
+              res
+                .status(401)
+                .json({ msg: "you are not authorized for this route" });
+            }
+          }
+        }
+      );
+    }
+  } catch (e) {
+    console.log(e);
+  }
+};
+
 const getFaculty = async (req, res) => {
   const authHeader = req.headers.authorization;
   const token = authHeader.split(" ")[1];
@@ -1123,35 +1169,36 @@ const setaugumentedResult = async (req, res) => {
             //roles
 
             try {
-              const { studentId, subjectName,marks } = req.body;
+              const { studentId, subjectName, marks } = req.body;
               const theSubject = subjectName.toUpperCase();
-              console.log(theSubject,studentId)
+              console.log(theSubject, studentId);
               const theRecord = await resultsDatabase.findOne({
                 studentid: studentId,
                 subjectName: theSubject,
               });
               console.log(theRecord);
-              if(marks>5){
-                res.json({msg:"not possible to give marks more than 5"})
-
-              }else{
-
-                if(theRecord==null){
-                  res.status(404).json({msg:"student not found!!"})
-                }else{
-                  const updatingId=theRecord["_id"];
-                  const theArray=theRecord.results;
-                  theArray[16]=marks;
-                  theArray[18]=theArray[17]+theArray[16]+theArray[15];
-                  await resultsDatabase.findByIdAndUpdate(updatingId,{results:theArray},(err,result)=>{
-                    if(err){
-                      res.json({msg:"some error"})
-                    }else{
-                      console.log(result)
-                      res.json({msg:"done"})
+              if (marks > 5) {
+                res.json({ msg: "not possible to give marks more than 5" });
+              } else {
+                if (theRecord == null) {
+                  res.status(404).json({ msg: "student not found!!" });
+                } else {
+                  const updatingId = theRecord["_id"];
+                  const theArray = theRecord.results;
+                  theArray[16] = marks;
+                  theArray[18] = theArray[17] + theArray[16] + theArray[15];
+                  await resultsDatabase.findByIdAndUpdate(
+                    updatingId,
+                    { results: theArray },
+                    (err, result) => {
+                      if (err) {
+                        res.json({ msg: "some error" });
+                      } else {
+                        console.log(result);
+                        res.json({ msg: "done" });
+                      }
                     }
-                  })
-  
+                  );
                 }
               }
               // theArray[]
@@ -1367,21 +1414,20 @@ const submitResult = async (req, res) => {
     });
     let grandTotal = 0;
     const theArray = theResultRecord.results;
-    if(questionNumber===16){
-      if(marks>5){res.json({msg:"marks cannot be greater than 5"})
-    }else{
-      theArray[17]=marks;
-      console.log("3");
-      for (let j = 15; j < theArray.length - 1; j++) {
-        console.log(theArray[j]);
-        grandTotal = grandTotal + Number(theArray[j]);
+    if (questionNumber === 16) {
+      if (marks > 5) {
+        res.json({ msg: "marks cannot be greater than 5" });
+      } else {
+        theArray[17] = marks;
+        console.log("3");
+        for (let j = 15; j < theArray.length - 1; j++) {
+          console.log(theArray[j]);
+          grandTotal = grandTotal + Number(theArray[j]);
+        }
+        console.log(grandTotal, "grand total");
+        theArray[18] = Math.ceil(grandTotal);
       }
-      console.log(grandTotal, "grand total");
-      theArray[18] = Math.ceil(grandTotal);
-    }
-    
-    }else{
-
+    } else {
       const subject = subjectName.toUpperCase();
       const theDepartment = department.toUpperCase();
       const noOfExpQuestions = await questionsDatabase.find({
@@ -1440,6 +1486,7 @@ module.exports = {
   addpasswords,
   submitResult,
   // deleteSubject
+  getAllDepartments,
   setaugumentedResult,
   deleteQuestion,
   getAdmin,
