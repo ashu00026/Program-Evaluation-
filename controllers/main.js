@@ -566,22 +566,24 @@ const getAdmin = async (req, res) => {
                   let theStaff = new Set([]);
                   theRecords.forEach((record) => {
                     // let theSubjects = [];
-                    let subjects = record.details.subjects[0];
+                    let subjects = record.details.subjects;
+                    subjects.forEach((subject) => {
+                      const semester = record.details.semester;
+                      const section = record.details.section;
+                      const staffName = record.name;
+                      const department = record.department;
+                      // theStaff.add(staffName);
+                      // theSubjects=theSubjects[0]
+                      theDetailsOfSubjects.push({
+                        subjects: subject,
+                        staffName,
+                        semester,
+                        section,
+                      });
+                    });
                     // subjects.forEach((subject) => {
                     // });
                     // const theSubjects=subject;
-                    const semester = record.details.semester;
-                    const section = record.details.section;
-                    const staffName = record.name;
-                    const department = record.department;
-                    // theStaff.add(staffName);
-                    // theSubjects=theSubjects[0]
-                    theDetailsOfSubjects.push({
-                      subjects,
-                      staffName,
-                      semester,
-                      section,
-                    });
                   });
                   const completeStaff = await staffDatabase.find({
                     department,
@@ -727,7 +729,7 @@ const addSubject = async (req, res) => {
 
             //code goes here
             console.log("inside add subject");
-            const { name, semester, subject, section, department } = req.body;
+            let { name, semester, subject, section, department } = req.body;
             const theDepartmentOfStudent = await department.toUpperCase();
             try {
               const allSubjectsOfSemester = [];
@@ -742,6 +744,7 @@ const addSubject = async (req, res) => {
                   allSubjectsOfSemester.push(subject);
                 });
               });
+              subject = subject.toUpperCase();
               if (allSubjectsOfSemester.includes(subject)) {
                 res.status(200).json({
                   msg: `the subject is already assigned for the section`,
@@ -903,6 +906,127 @@ const addSubject = async (req, res) => {
   }
 };
 
+const management = async (req, res) => {
+  const authHeader = req.headers.authorization;
+  const token = authHeader.split(" ")[1];
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    throw new UnauthenticatedError("No token provided");
+  } else {
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET,
+      async function (err, decoded) {
+        console.log("22222");
+        if (err) {
+          console.log(err);
+          req.authenticated = false;
+          req.decoded = null;
+        } else {
+          const { username } = decoded;
+          if (username == "admin") {
+            const { dataToUpdate, updatedData,department } = req.body;
+            console.log(dataToUpdate, updatedData);
+            for (let i = 0; i < dataToUpdate.length; i++) {
+              // for(int data=0;data<dataToUpdate.length;data++){}
+              const staffNameToUpdate = dataToUpdate[i].staffName;
+              const updatedStaffName = updatedData[i].staffName;
+              const subjectToDelete = dataToUpdate[i].subjects;
+              const semester = dataToUpdate[i].semester;
+              const section = dataToUpdate[i].section;
+              console.log(
+                staffNameToUpdate,
+                subjectToDelete,
+                semester,
+                section,
+                updatedStaffName
+              );
+              const deleteStaffSubejct = await subjectsDatabase.findOne({
+                name: staffNameToUpdate,
+                department:department,
+                "details.semester": semester,
+                "details.section": section,
+              });
+              let staffSubjects = deleteStaffSubejct.details.subjects;
+              const theDbId = deleteStaffSubejct["_id"];
+              if (staffSubjects.includes(subjectToDelete)) {
+                let theStaffSubjectsAfterDeleting = staffSubjects.filter(
+                  (subject) => subject !== subjectToDelete
+                );
+                await subjectsDatabase.findByIdAndUpdate(
+                  theDbId,
+                  { "details.subjects": theStaffSubjectsAfterDeleting },
+                  (err, result) => {
+                    if (err) {
+                      res.json({ msg: "some error" });
+                    } else {
+                      console.log(result);
+                      // res.json({ msg: "done" });
+                    }
+                  }
+                );
+                const theStaffToUpdate = await subjectsDatabase.findOne({
+                  name: updatedStaffName,
+                  department:department,
+                  "details.semester": semester,
+                  "details.section": section,
+                });
+                if (theStaffToUpdate==null) {
+                  let theStaffSubject=[]
+                  theStaffSubject.push(subjectToDelete)
+                   await subjectsDatabase.create({
+                    name: updatedStaffName,
+                    department: department,
+                    details: {
+                      semester: semester,
+                      section: section,
+                      subjects: theStaffSubject,
+                    },
+                  });
+                  res.status(200).json({msg:"created and updated"})
+                } else {
+                  let theStaffSubjectsPresent =
+                    theStaffToUpdate.details.subjects;
+                  const theStaffId = theStaffToUpdate["_id"];
+                  if (!theStaffSubjectsPresent.includes(subjectToDelete)) {
+                    theStaffSubjectsPresent.push(subjectToDelete);
+                    await subjectsDatabase.findByIdAndUpdate(
+                      theStaffId,
+                      { "details.subjects": theStaffSubjectsPresent },
+                      (err, result) => {
+                        if (err) {
+                          res.json({ msg: "some error" });
+                        } else {
+                          console.log(result);
+                          res.status(200).json({ msg: "done", result });
+                        }
+                      }
+                    );
+                  } else {
+                    res
+                      .status(401)
+                      .json({ msg: "the staff already has the subject" });
+                  }
+                }
+              } else {
+                res
+                  .status(401)
+                  .json({ msg: "the staff doesnt have the subject" });
+              }
+            }
+            // await subjectsDatabase.find({})
+
+            //code goes here
+          } else {
+            res
+              .status(401)
+              .json({ msg: "you are not authorized for this route" });
+          }
+        }
+      }
+    );
+  }
+};
+
 const getStudent = async (req, res) => {
   try {
     const studentID = req.query.studentId;
@@ -968,15 +1092,15 @@ const getAllDepartments = async (req, res) => {
             if (username == "admin") {
               // const adminId=req.query.id;
               // console.log("admin id",adminId)
-              const departments=await adminsDatabase.find({})
-              let Alldepartments=new Set([])
-              departments.forEach((record)=>{
-                console.log(record.department)
-                const department=record.department
-                Alldepartments.add(department)
-              })
-              Alldepartments=[...Alldepartments]
-              res.status(200).json({departments:Alldepartments})
+              const departments = await adminsDatabase.find({});
+              let Alldepartments = new Set([]);
+              departments.forEach((record) => {
+                console.log(record.department);
+                const department = record.department;
+                Alldepartments.add(department);
+              });
+              Alldepartments = [...Alldepartments];
+              res.status(200).json({ departments: Alldepartments });
               //roles
               //code goes here
             } else {
@@ -1473,6 +1597,7 @@ const submitResult = async (req, res) => {
 // }
 
 module.exports = {
+  management,
   login,
   register,
   addSubject,
