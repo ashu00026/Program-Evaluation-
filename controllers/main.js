@@ -1479,7 +1479,7 @@ const getQuestions = async (req, res) => {
     });
     res
       .status(200)
-      .json({ msg: "The subject Problems", problems: questionsArray });
+      .json({ msg: "The subject Problems",theSubject, problems: questionsArray });
   }
 };
 // const facultyDashBoard=async(req,res)=>{
@@ -1507,13 +1507,13 @@ const getQuestion = async (req, res) => {
     const theProblemInput = theProblem.sampleInput;
     const theProblemOutput = theProblem.sampleOutput;
     const uniqueId = theProblem["_id"];
-    res.json({
+    res.status(200).json({
       testCases: theTestCases,
       questionNumber: theQuestionNumber,
       problemStatement: theProblemStatement,
       uniqueId,
       theProblemInput,
-      theProblemOutput,
+      theProblemOutput,theSubject
     });
   }
 };
