@@ -656,8 +656,13 @@ const login = async (req, res) => {
     const isMatch = await bcrypt.compare(thePassword, adminPass);
     console.log(isMatch);
     if (isMatch) {
+      const theAdmin=await adminsDatabase.findOne({id:theId})
+      const email=theAdmin.email
+      const mobileNumber=theAdmin.mobileNumber
+      // const department=theAdmin.department
+
       console.log(`insisde the admin if block!`);
-      res.status(200).json({ username, theName, token, theId, department });
+      res.status(200).json({ username, theName,email,mobileNumber, token, theId, department });
     } else {
       res.status(401).json({ msg: "wrong credentials" });
     }
